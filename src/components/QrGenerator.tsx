@@ -17,27 +17,29 @@ interface QrGeneratorProps {
 // Modify these values to align overlays precisely with your sahas-template.jpg design
 const TEMPLATE_CONFIG = {
   qr: {
-    topPercent: '52%',      // Starts 52% down from the top
-    widthPercent: '52%',    // Takes up 52% height/width space
-    canvasY: 670,
+    topPercent: '30%',      // Position the QR code slightly higher as seen in reference
+    widthPercent: '50%',
+    canvasY: 420,
     canvasSize: 480,
     bgPadding: 16,
-    borderRadius: 24,
+    borderRadius: 0,        // Clean sharp edges for the white box like the second image
   },
   name: {
-    topPercent: '81.5%',    // Placed right below the QR code block (0.5 to 0.7 equivalent gap)
-    canvasY: 1190,          // Adjusted canvas Y coordinates to match the new flow
-    fontSize: 42,           // Made slightly larger for a bold, dominant look
-    fontWeight: '700',      // Tailwind bold or canvas bold context
-    color: '#4a2711',       // Your aesthetic Dark Brown
+    topPercent: '68%',      // Shifted safely down below the box
+    canvasY: 960,
+    fontSize: 48,           // Slightly larger, crisp size
+    fontFamily: 'Georgia, serif',
+    fontWeight: 'bold',
+    color: '#1a1a1a',       // Deep high-contrast dark color
   },
   year: {
-    topPercent: '86%',      // Pushed further down below the name (1.5 to 1.7 equivalent gap)
-    canvasY: 1260,          // Pushed lower down on the canvas render
-    fontSize: 34,           // Sleeker, smaller size for secondary information
-    fontWeight: '500',      // Medium weight for visual contrast
-    color: '#b59a83',       // Your aesthetic Light Brown
-    text: '2026 - 27'       // Hardcoded year string for the batch
+    topPercent: '75%',      // Clean vertical line-gap spacing underneath the name
+    canvasY: 1060,
+    fontSize: 36,
+    fontFamily: 'Georgia, serif',
+    fontWeight: 'normal',
+    color: '#3f3f46',       // Balanced neutral dark accent color
+    text: '2026-27'
   }
 };
 
@@ -113,47 +115,34 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
       ctx.drawImage(img, 0, 0, cardWidth, cardHeight);
 
       // 2. Draw QR Code with white background padding for contrast
-      const { canvasY, canvasSize, bgPadding, borderRadius } = TEMPLATE_CONFIG.qr;
+      const { canvasY, canvasSize, bgPadding } = TEMPLATE_CONFIG.qr;
       const qrX = (cardWidth - canvasSize) / 2;
 
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.roundRect(
+      ctx.fillRect(
         qrX - bgPadding,
         canvasY - bgPadding,
         canvasSize + bgPadding * 2,
-        canvasSize + bgPadding * 2,
-        borderRadius
+        canvasSize + bgPadding * 2
       );
       ctx.fill();
 
       ctx.drawImage(canvas, qrX, canvasY, canvasSize, canvasSize);
 
-      // 3. Draw Member Name & Year with inline centering alignment
-      const nameText = registeredName;
-      const yearText = '   2026-27'; // 3 spaces
-
-      ctx.font = `bold ${TEMPLATE_CONFIG.name.fontSize}px Inter, system-ui, sans-serif`;
-      const nameWidth = ctx.measureText(nameText).width;
-
-      ctx.font = `bold ${TEMPLATE_CONFIG.year.fontSize}px Inter, system-ui, sans-serif`;
-      const yearWidth = ctx.measureText(yearText).width;
-
-      const totalWidth = nameWidth + yearWidth;
-      const startX = (cardWidth - totalWidth) / 2;
-
-      // Draw Name (Dark Brown)
+      // 3. Draw Member Name (Centered, Serif)
       ctx.fillStyle = TEMPLATE_CONFIG.name.color;
-      ctx.font = `bold ${TEMPLATE_CONFIG.name.fontSize}px Inter, system-ui, sans-serif`;
-      ctx.textAlign = 'left';
-      ctx.fillText(nameText, startX, TEMPLATE_CONFIG.name.canvasY);
+      ctx.font = `${TEMPLATE_CONFIG.name.fontWeight} ${TEMPLATE_CONFIG.name.fontSize}px ${TEMPLATE_CONFIG.name.fontFamily}`;
+      ctx.textAlign = 'center';
+      ctx.fillText(registeredName, cardWidth / 2, TEMPLATE_CONFIG.name.canvasY);
 
-      // Draw Year (Light Brown)
+      // 4. Draw Year (Centered, Serif)
       ctx.fillStyle = TEMPLATE_CONFIG.year.color;
-      ctx.font = `bold ${TEMPLATE_CONFIG.year.fontSize}px Inter, system-ui, sans-serif`;
-      ctx.fillText(yearText, startX + nameWidth, TEMPLATE_CONFIG.name.canvasY);
+      ctx.font = `${TEMPLATE_CONFIG.year.fontWeight} ${TEMPLATE_CONFIG.year.fontSize}px ${TEMPLATE_CONFIG.year.fontFamily}`;
+      ctx.textAlign = 'center';
+      ctx.fillText(TEMPLATE_CONFIG.year.text, cardWidth / 2, TEMPLATE_CONFIG.year.canvasY);
 
-      // 4. Trigger download
+      // 5. Trigger download
       const link = document.createElement('a');
       link.download = `${generatedId}.png`;
       link.href = exportCanvas.toDataURL('image/png');
@@ -188,7 +177,7 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="member@example.com"
-            className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-850 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all text-sm"
+            className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-855 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all text-sm"
           />
         </div>
 
@@ -231,7 +220,7 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
                 top: TEMPLATE_CONFIG.qr.topPercent,
                 width: TEMPLATE_CONFIG.qr.widthPercent,
               }}
-              className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-2 rounded-xl border border-stone-200 shadow-sm flex items-center justify-center aspect-square"
+              className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-2 border border-stone-200 shadow-sm flex items-center justify-center aspect-square"
             >
               <QRCodeCanvas
                 value={generatedId}
@@ -251,6 +240,7 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
                 style={{
                   color: TEMPLATE_CONFIG.name.color,
                   fontWeight: TEMPLATE_CONFIG.name.fontWeight as any,
+                  fontFamily: TEMPLATE_CONFIG.name.fontFamily,
                 }}
                 className="text-sm sm:text-base truncate drop-shadow-sm"
               >
@@ -267,6 +257,7 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
                 style={{
                   color: TEMPLATE_CONFIG.year.color,
                   fontWeight: TEMPLATE_CONFIG.year.fontWeight as any,
+                  fontFamily: TEMPLATE_CONFIG.year.fontFamily,
                 }}
                 className="text-[10px] sm:text-xs tracking-wider"
               >
