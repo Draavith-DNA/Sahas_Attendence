@@ -97,8 +97,13 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-sm flex flex-col items-center">
         {/* Logo & Branding */}
         <div className="mb-10 text-center">
-          <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shadow-lg shadow-emerald-500/20 animate-pulse-glow">
-            <span className="text-3xl font-black text-white tracking-tighter">S</span>
+          <div className="w-24 h-24 mx-auto mb-5 relative flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo.png"
+              alt="Sahas Logo"
+              className="max-w-full max-h-full object-contain animate-float"
+            />
           </div>
           <h1 className="text-3xl font-bold text-zinc-50 tracking-tight">SAHAS</h1>
           <p className="text-zinc-500 text-sm mt-1.5">Attendance System</p>
