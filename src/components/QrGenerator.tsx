@@ -33,7 +33,7 @@ const TEMPLATE_CONFIG = {
     color: '#1a1a1a',       // Deep high-contrast dark color
   },
   year: {
-    topPercent: '75%',      // Clean vertical line-gap spacing underneath the name
+    topPercent: '77%',      // Clean vertical line-gap spacing underneath the name
     canvasY: 1060,
     fontSize: 36,
     fontFamily: 'Georgia, serif',
@@ -119,14 +119,12 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
       const qrX = (cardWidth - canvasSize) / 2;
 
       ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
       ctx.fillRect(
         qrX - bgPadding,
         canvasY - bgPadding,
         canvasSize + bgPadding * 2,
         canvasSize + bgPadding * 2
       );
-      ctx.fill();
 
       ctx.drawImage(canvas, qrX, canvasY, canvasSize, canvasSize);
 
@@ -220,7 +218,7 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
                 top: TEMPLATE_CONFIG.qr.topPercent,
                 width: TEMPLATE_CONFIG.qr.widthPercent,
               }}
-              className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-2 border border-stone-200 shadow-sm flex items-center justify-center aspect-square"
+              className="absolute left-1/2 -translate-x-1/2 bg-white p-2 border border-stone-200 shadow-sm flex items-center justify-center aspect-square"
             >
               <QRCodeCanvas
                 value={generatedId}
