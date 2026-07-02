@@ -28,7 +28,11 @@ const TEMPLATE_CONFIG = {
     bottomPercent: '13%', // CSS vertical positioning (centered text zone)
     canvasY: 1210,        // Canvas vertical coordinate (pixels)
     fontSize: 40,         // Canvas font size (pixels)
-    color: '#dfcfc1',     // Canvas font color (Lightest brownish)
+    color: '#4a2711',     // Dark Brown color
+  },
+  year: {
+    fontSize: 40,         // Canvas font size (pixels)
+    color: '#b59a83',     // Light Brown color
   }
 };
 
@@ -120,12 +124,29 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
 
       ctx.drawImage(canvas, qrX, canvasY, canvasSize, canvasSize);
 
-      // 3. Draw Member Name & Year (e.g. John Doe (2026-27))
-      const displayName = `${registeredName} (2026-27)`;
+      // 3. Draw Member Name & Year with inline centering alignment
+      const nameText = registeredName;
+      const yearText = '   2026-27'; // 3 spaces
+
+      ctx.font = `bold ${TEMPLATE_CONFIG.name.fontSize}px Inter, system-ui, sans-serif`;
+      const nameWidth = ctx.measureText(nameText).width;
+
+      ctx.font = `bold ${TEMPLATE_CONFIG.year.fontSize}px Inter, system-ui, sans-serif`;
+      const yearWidth = ctx.measureText(yearText).width;
+
+      const totalWidth = nameWidth + yearWidth;
+      const startX = (cardWidth - totalWidth) / 2;
+
+      // Draw Name (Dark Brown)
       ctx.fillStyle = TEMPLATE_CONFIG.name.color;
       ctx.font = `bold ${TEMPLATE_CONFIG.name.fontSize}px Inter, system-ui, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText(displayName, cardWidth / 2, TEMPLATE_CONFIG.name.canvasY);
+      ctx.textAlign = 'left';
+      ctx.fillText(nameText, startX, TEMPLATE_CONFIG.name.canvasY);
+
+      // Draw Year (Light Brown)
+      ctx.fillStyle = TEMPLATE_CONFIG.year.color;
+      ctx.font = `bold ${TEMPLATE_CONFIG.year.fontSize}px Inter, system-ui, sans-serif`;
+      ctx.fillText(yearText, startX + nameWidth, TEMPLATE_CONFIG.name.canvasY);
 
       // 4. Trigger download
       const link = document.createElement('a');
@@ -221,11 +242,9 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
               style={{ bottom: TEMPLATE_CONFIG.name.bottomPercent }}
               className="absolute left-0 right-0 text-center px-4"
             >
-              <p
-                style={{ color: TEMPLATE_CONFIG.name.color }}
-                className="font-bold text-sm sm:text-base truncate drop-shadow-sm"
-              >
-                {registeredName} (2026-27)
+              <p className="font-bold text-sm sm:text-base truncate drop-shadow-sm">
+                <span style={{ color: TEMPLATE_CONFIG.name.color }}>{registeredName}</span>
+                <span className="whitespace-pre" style={{ color: TEMPLATE_CONFIG.year.color }}>   2026-27</span>
               </p>
             </div>
           </div>
