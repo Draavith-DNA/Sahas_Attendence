@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { AUTH_COOKIE_NAME, MEMBER_ID_REGEX } from '@/lib/constants';
 import {
-  appendAttendance,
+  recordAttendanceMatrix,
   checkDuplicate,
   getMemberName,
   ensureSheetStructure,
@@ -58,27 +58,8 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Look up name
-        const memberName = (await getMemberName(memberId)) ?? 'Unknown Member';
-
-        // Append row
-        const timestamp = new Date().toLocaleString('en-IN', {
-          timeZone: 'Asia/Kolkata',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-        });
-
-        await appendAttendance({
-          timestamp,
-          memberId,
-          memberName,
-          sessionType,
-          status: 'Present',
-        });
+        // Record to matrix
+        await recordAttendanceMatrix(memberId, sessionType, date);
 
         synced++;
       } catch {
@@ -89,6 +70,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ synced, duplicates, errors });
   } catch (error) {
     console.error('Sync API error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
