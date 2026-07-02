@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { AUTH_COOKIE_NAME, MEMBER_ID_REGEX } from '@/lib/constants';
 import {
-  recordAttendanceMatrix,
+  recordAttendance,
   checkDuplicate,
   getMemberName,
   ensureSheetStructure,
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     for (const record of records) {
       try {
-        const { memberId, sessionType, date } = record;
+        const { memberId, sessionType, date, arrivalStatus, eventStartTime } = record;
 
         // Validate format
         if (!MEMBER_ID_REGEX.test(memberId)) {
@@ -58,8 +58,14 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Record to matrix
-        await recordAttendanceMatrix(memberId, sessionType, date);
+        // Record to Sheet
+        await recordAttendance(
+          memberId,
+          sessionType,
+          date,
+          arrivalStatus || 'Present',
+          eventStartTime || '07:00'
+        );
 
         synced++;
       } catch {

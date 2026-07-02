@@ -11,7 +11,7 @@ import ScanFeedback from '@/components/ScanFeedback';
 import ScanHistory from '@/components/ScanHistory';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useOfflineQueue } from '@/hooks/useOfflineQueue';
-import { playSuccess, playError, playWarning } from '@/lib/beep';
+import { playSuccess, playError, playWarning, playLateBeep, playVeryLateBeep } from '@/lib/beep';
 import type { FeedbackType } from '@/components/ScanFeedback';
 
 interface ScanRecord {
@@ -29,6 +29,7 @@ function ScannerContent() {
 
   const sessionType = searchParams.get('type') || 'General Meeting';
   const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
+  const eventStartTime = searchParams.get('startTime') || '07:00';
 
   const [scanCount, setScanCount] = useState(0);
   const [scanRecords, setScanRecords] = useState<ScanRecord[]>([]);
@@ -41,6 +42,55 @@ function ScannerContent() {
     message: string;
     subMessage?: string;
   } | null>(null);
+
+  // Utility to determine arrival status
+  const getArrivalStatus = useCallback((startTimeStr: string): 'Present' | 'Late' | 'V-Late' => {
+    if (!startTimeStr) return 'Present';
+    try {
+      const [startHours, startMinutes] = startTimeStr.split(':').map(Number);
+      const now = new Date();
+      const eventStart = new Date(now);
+      eventStart.setHours(startHours, startMinutes, 0, 0);
+      const diffMs = now.getTime() - eventStart.getTime();
+      const diffMinutes = diffMs / 1000 / 60;
+
+      if (diffMinutes <= 10) {
+        return 'Present';
+      } else if (diffMinutes <= 20) {
+        return 'Late';
+      } else {
+        return 'V-Late';
+      }
+    } catch {
+      return 'Present';
+    }
+  }, []);
+
+  // Helper to trigger audio and visual feedback based on arrival status
+  const triggerFeedbackForStatus = useCallback((status: 'Present' | 'Late' | 'V-Late', memberName: string, subText: string) => {
+    if (status === 'Present') {
+      playSuccess();
+      setFeedback({
+        type: 'present',
+        message: memberName,
+        subMessage: `${subText} (Present)`,
+      });
+    } else if (status === 'Late') {
+      playLateBeep();
+      setFeedback({
+        type: 'late',
+        message: 'MARKED LATE',
+        subMessage: `${memberName} (${subText})`,
+      });
+    } else {
+      playVeryLateBeep();
+      setFeedback({
+        type: 'v-late',
+        message: 'MARKED VERY LATE',
+        subMessage: `${memberName} (${subText})`,
+      });
+    }
+  }, []);
 
   const handleScan = useCallback(
     async (memberId: string) => {
@@ -55,26 +105,23 @@ function ScannerContent() {
         return;
       }
 
+      const status = getArrivalStatus(eventStartTime);
+
       if (!isOnline) {
         // Queue for offline sync
-        playSuccess();
-        enqueue({ memberId, sessionType, date });
+        triggerFeedbackForStatus(status, 'Queued Offline', `${memberId} — will sync when online`);
+        enqueue({ memberId, sessionType, date, arrivalStatus: status, eventStartTime });
         setScannedIds((prev) => new Set(prev).add(memberId));
         setScanRecords((prev) => [
           {
             memberId,
-            memberName: 'Queued (offline)',
+            memberName: `Queued (${status})`,
             timestamp: new Date().toISOString(),
             status: 'queued',
           },
           ...prev,
         ]);
         setScanCount((c) => c + 1);
-        setFeedback({
-          type: 'success',
-          message: 'Queued Offline',
-          subMessage: `${memberId} — will sync when online`,
-        });
         return;
       }
 
@@ -82,13 +129,19 @@ function ScannerContent() {
         const res = await fetch('/api/attendance', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ memberId, sessionType, date }),
+          body: JSON.stringify({
+            memberId,
+            sessionType,
+            date,
+            arrivalStatus: status,
+            eventStartTime,
+          }),
         });
 
         const data = await res.json();
 
         if (res.ok) {
-          playSuccess();
+          triggerFeedbackForStatus(status, data.memberName || memberId, memberId);
           setScannedIds((prev) => new Set(prev).add(memberId));
           setScanRecords((prev) => [
             {
@@ -100,11 +153,6 @@ function ScannerContent() {
             ...prev,
           ]);
           setScanCount((c) => c + 1);
-          setFeedback({
-            type: 'success',
-            message: data.memberName || 'Member Recorded',
-            subMessage: memberId,
-          });
         } else if (data.duplicate) {
           playWarning();
           setScannedIds((prev) => new Set(prev).add(memberId));
@@ -123,18 +171,13 @@ function ScannerContent() {
         }
       } catch {
         // Network failed mid-request — queue it
-        playSuccess();
-        enqueue({ memberId, sessionType, date });
+        triggerFeedbackForStatus(status, 'Queued (offline)', `${memberId} — will sync later`);
+        enqueue({ memberId, sessionType, date, arrivalStatus: status, eventStartTime });
         setScannedIds((prev) => new Set(prev).add(memberId));
         setScanCount((c) => c + 1);
-        setFeedback({
-          type: 'success',
-          message: 'Queued (offline)',
-          subMessage: `${memberId} — will sync later`,
-        });
       }
     },
-    [scannedIds, isOnline, sessionType, date, enqueue]
+    [scannedIds, isOnline, sessionType, date, eventStartTime, enqueue, getArrivalStatus, triggerFeedbackForStatus]
   );
 
   const handleScanError = useCallback((error: string) => {

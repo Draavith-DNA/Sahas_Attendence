@@ -52,3 +52,22 @@ export function playError() {
 export function playWarning() {
   playTone(500, 200, 'triangle');
 }
+
+/** Late double-beep tone: two bright 800Hz short tones */
+export function playLateBeep() {
+  playTone(800, 100, 'sine');
+  setTimeout(() => {
+    playTone(800, 100, 'sine');
+  }, 150);
+}
+
+/** Very late triple-beep tone: three low-pitched sawtooth tones */
+export function playVeryLateBeep() {
+  playTone(250, 150, 'sawtooth');
+  setTimeout(() => {
+    playTone(250, 150, 'sawtooth');
+  }, 200);
+  setTimeout(() => {
+    playTone(250, 150, 'sawtooth');
+  }, 400);
+}

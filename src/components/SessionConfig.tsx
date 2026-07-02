@@ -7,7 +7,7 @@
 import { useState, useCallback } from 'react';
 
 interface SessionConfigProps {
-  onStartScanning: (sessionName: string, date: string) => void;
+  onStartScanning: (sessionName: string, date: string, startTime: string) => void;
 }
 
 type MainCategory = 'sunday' | 'meeting' | 'others';
@@ -17,6 +17,7 @@ export default function SessionConfig({ onStartScanning }: SessionConfigProps) {
   const [category, setCategory] = useState<MainCategory>('sunday');
   const [sundaySub, setSundaySub] = useState<SundaySubOption>('Technical');
   const [customText, setCustomText] = useState('');
+  const [startTime, setStartTime] = useState('07:00');
   const [date, setDate] = useState(() => {
     const now = new Date();
     return now.toISOString().split('T')[0];
@@ -39,8 +40,8 @@ export default function SessionConfig({ onStartScanning }: SessionConfigProps) {
       }
     }
 
-    onStartScanning(finalSessionName, date);
-  }, [category, sundaySub, customText, date, onStartScanning]);
+    onStartScanning(finalSessionName, date, startTime);
+  }, [category, sundaySub, customText, date, startTime, onStartScanning]);
 
   return (
     <div className="space-y-6">
@@ -137,6 +138,20 @@ export default function SessionConfig({ onStartScanning }: SessionConfigProps) {
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
+          className="w-full px-4 py-3 bg-white border border-[#e8dfd5] rounded-xl text-[#3d2314] focus:outline-none focus:ring-2 focus:ring-[#8e735b]/30 focus:border-[#8e735b] transition-all font-medium"
+        />
+      </div>
+
+      {/* Event Start Time Picker */}
+      <div>
+        <label htmlFor="session-start-time" className="block text-sm font-semibold text-[#8a7060] mb-1.5">
+          Event Start Time
+        </label>
+        <input
+          id="session-start-time"
+          type="time"
+          value={startTime}
+          onChange={(e) => setStartTime(e.target.value)}
           className="w-full px-4 py-3 bg-white border border-[#e8dfd5] rounded-xl text-[#3d2314] focus:outline-none focus:ring-2 focus:ring-[#8e735b]/30 focus:border-[#8e735b] transition-all font-medium"
         />
       </div>

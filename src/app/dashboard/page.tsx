@@ -29,8 +29,8 @@ export default function DashboardPage() {
       .catch(() => setMemberCount(null));
   }, []);
 
-  const handleStartScanning = (sessionType: string, date: string) => {
-    const params = new URLSearchParams({ type: sessionType, date });
+  const handleStartScanning = (sessionType: string, date: string, startTime: string) => {
+    const params = new URLSearchParams({ type: sessionType, date, startTime });
     router.push(`/dashboard/scanner?${params.toString()}`);
   };
 

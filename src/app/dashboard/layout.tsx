@@ -18,7 +18,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       <OfflineIndicator />
       <main className="flex-1 pb-20 overflow-y-auto">{children}</main>
       <MobileNav />

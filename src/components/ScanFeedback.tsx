@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from 'react';
 
-export type FeedbackType = 'success' | 'duplicate' | 'error';
+export type FeedbackType = 'success' | 'duplicate' | 'error' | 'present' | 'late' | 'v-late';
 
 interface ScanFeedbackProps {
   type: FeedbackType;
@@ -46,6 +46,33 @@ export default function ScanFeedback({
         </svg>
       ),
       ring: 'ring-[#c5a880]/30',
+    },
+    present: {
+      bg: 'from-emerald-500/95 to-green-600/95',
+      icon: (
+        <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+        </svg>
+      ),
+      ring: 'ring-emerald-300/30',
+    },
+    late: {
+      bg: 'from-amber-500/95 to-orange-600/95',
+      icon: (
+        <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      ring: 'ring-amber-300/30',
+    },
+    "v-late": {
+      bg: 'from-rose-600/95 to-red-700/95',
+      icon: (
+        <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+        </svg>
+      ),
+      ring: 'ring-rose-300/30',
     },
     duplicate: {
       bg: 'from-amber-500 to-amber-600',

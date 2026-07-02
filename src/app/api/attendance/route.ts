@@ -7,7 +7,7 @@ import { google } from 'googleapis';
 import { verifyToken } from '@/lib/auth';
 import { AUTH_COOKIE_NAME, MEMBER_ID_REGEX, SHEETS } from '@/lib/constants';
 import {
-  recordAttendanceMatrix,
+  recordAttendance,
   checkDuplicate,
   getMemberName,
   ensureSheetStructure,
@@ -49,89 +49,49 @@ export async function GET(request: NextRequest) {
 
     const sheets = google.sheets({ version: 'v4', auth });
 
-    // 1. Fetch member registry to map Name -> ID
-    const membersList = await getMembers();
-    const nameToId = new Map<string, string>();
-    for (const m of membersList) {
-      nameToId.set(m.name, m.memberId);
-    }
-
-    // 2. Fetch sessions log to map Date -> Session Name
-    const sessionsResponse = await sheets.spreadsheets.values.get({
-      spreadsheetId: sheetId,
-      range: `${SHEETS.SESSIONS}!A:B`,
-    });
-    const sessionsRows = sessionsResponse.data.values ?? [];
-    const dateToType = new Map<string, string>();
-    for (const r of sessionsRows.slice(1)) {
-      const d = r[0];
-      const name = r[1];
-      if (d && name) {
-        dateToType.set(d, name);
-      }
-    }
-
-    // 3. Fetch attendance matrix
+    // Fetch attendance transactional records
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
-      range: `${SHEETS.ATTENDANCE}!A:ZZ`,
+      range: `${SHEETS.ATTENDANCE}!A:F`,
     });
 
-    const matrix = response.data.values ?? [[]];
-    const headers = matrix[0] ?? [];
-    const memberRows = matrix.slice(1);
+    const rows = response.data.values ?? [];
+    // Columns: A: Timestamp, B: Member ID, C: Member Name, D: Session Type, E: Status, F: Event Start Time
+    const records = rows.slice(1).map((row) => {
+      const timestamp = row[0] ?? '';
+      const memberId = row[1] ?? '';
+      const memberName = row[2] ?? '';
+      const sessionType = row[3] ?? '';
+      const statusVal = row[4] ?? 'Present';
+      return {
+        timestamp: timestamp.split('T')[0], // keep just the date part for display compatibility
+        memberId,
+        memberName,
+        sessionType,
+        status: statusVal,
+      };
+    });
 
-    const records: Array<{
-      timestamp: string;
-      memberId: string;
-      memberName: string;
-      sessionType: string;
-      status: string;
-    }> = [];
-
-    // Columns B (index 1) onwards are session columns
-    for (let c = 1; c < headers.length; c++) {
-      const header = headers[c] ?? ''; // "YYYY-MM-DD"
-      if (!header) continue;
-
-      const datePart = header;
-      const typePart = dateToType.get(header) || 'Session';
-
-      // Apply date and session type filters
-      const matchesDate = dateFilter ? datePart === dateFilter : true;
-      
+    // Apply date and session type filters
+    const filteredRecords = records.filter((r) => {
+      const matchesDate = dateFilter ? r.timestamp === dateFilter : true;
       let matchesType = false;
       if (typeFilter === 'all') {
         matchesType = true;
       } else if (typeFilter === 'sunday') {
-        matchesType = typePart.startsWith('Sahas Sunday');
+        matchesType = r.sessionType.startsWith('Sahas Sunday');
       } else if (typeFilter === 'meeting') {
-        matchesType = typePart === 'Meeting';
+        matchesType = r.sessionType === 'Meeting';
       } else if (typeFilter === 'others') {
-        matchesType = !typePart.startsWith('Sahas Sunday') && typePart !== 'Meeting';
+        matchesType = !r.sessionType.startsWith('Sahas Sunday') && r.sessionType !== 'Meeting';
       }
-
-      if (matchesDate && matchesType) {
-        for (const row of memberRows) {
-          const memberName = row[0] ?? '';
-          if (!memberName) continue;
-
-          const statusVal = row[c] ?? 'Absent';
-          records.push({
-            timestamp: datePart,
-            memberId: nameToId.get(memberName) || 'N/A',
-            memberName,
-            sessionType: typePart,
-            status: statusVal,
-          });
-        }
-      }
-    }
+      return matchesDate && matchesType;
+    });
 
     // Newest sessions first
-    records.reverse();
+    filteredRecords.reverse();
 
-    return NextResponse.json({ records });
+    return NextResponse.json({ records: filteredRecords });
   } catch (error) {
     console.error('Attendance GET error:', error);
     return NextResponse.json({ records: [] });
@@ -153,7 +113,7 @@ export async function POST(request: NextRequest) {
 
     // 2. Parse & validate body
     const body = await request.json();
-    const { memberId, sessionType, date } = body;
+    const { memberId, sessionType, date, arrivalStatus, eventStartTime } = body;
 
     if (!memberId || !sessionType || !date) {
       return NextResponse.json(
@@ -191,8 +151,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 5. Record to Matrix
-    const { memberName } = await recordAttendanceMatrix(memberId, sessionType, date);
+    // 5. Record to Sheet
+    const { memberName } = await recordAttendance(
+      memberId,
+      sessionType,
+      date,
+      arrivalStatus || 'Present',
+      eventStartTime || '07:00'
+    );
 
     return NextResponse.json({
       success: true,
@@ -200,9 +166,11 @@ export async function POST(request: NextRequest) {
       memberName,
       sessionType,
       date,
+      arrivalStatus: arrivalStatus || 'Present',
+      eventStartTime: eventStartTime || '07:00',
     });
   } catch (error) {
-    console.error('Attendance API error:', error);
+    console.error('Attendance POST API error:', error);
     const message = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: message }, { status: 500 });
   }

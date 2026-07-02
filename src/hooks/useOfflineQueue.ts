@@ -12,6 +12,8 @@ export interface QueuedRecord {
   sessionType: string;
   date: string;
   queuedAt: string;
+  arrivalStatus?: string;
+  eventStartTime?: string;
 }
 
 /**

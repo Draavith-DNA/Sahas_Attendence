@@ -81,7 +81,7 @@ export function getColumnLetter(colIndex: number): string {
 
 /**
  * Ensure the sheet tabs exist with proper headers.
- * For Attendance: A1 must be "Names".
+ * For Attendance: Row 1 must have Timestamp, Member ID, Member Name, Session Type, Status, Event Start Time.
  * For Members: A1 must be Member ID header.
  * For Sessions: A1 must be Date, B1 must be Session Name.
  */
@@ -106,17 +106,17 @@ export async function ensureSheetStructure(): Promise<void> {
         spreadsheetId,
         range: `${SHEETS.ATTENDANCE}!A1`,
         valueInputOption: 'RAW',
-        requestBody: { values: [['Names']] },
+        requestBody: { values: [['Timestamp', 'Member ID', 'Member Name', 'Session Type', 'Status', 'Event Start Time']] },
       });
     } else {
-      // Validate A1 is "Names"
+      // Validate A1 is "Timestamp"
       const res = await sheets.spreadsheets.values.get({
         spreadsheetId,
-        range: `${SHEETS.ATTENDANCE}!A1`,
+        range: `${SHEETS.ATTENDANCE}!A1:F1`,
       });
-      const firstCell = res.data.values?.[0]?.[0];
-      if (firstCell !== 'Names') {
-        // Migration: Reset old attendance sheet structure to new matrix structure
+      const headers = res.data.values?.[0];
+      if (!headers || headers[0] !== 'Timestamp') {
+        // Migration: Reset old attendance sheet structure to transactional structure
         await sheets.spreadsheets.values.clear({
           spreadsheetId,
           range: `${SHEETS.ATTENDANCE}!A:ZZ`,
@@ -125,7 +125,7 @@ export async function ensureSheetStructure(): Promise<void> {
           spreadsheetId,
           range: `${SHEETS.ATTENDANCE}!A1`,
           valueInputOption: 'RAW',
-          requestBody: { values: [['Names']] },
+          requestBody: { values: [['Timestamp', 'Member ID', 'Member Name', 'Session Type', 'Status', 'Event Start Time']] },
         });
       }
     }
@@ -167,13 +167,15 @@ export async function ensureSheetStructure(): Promise<void> {
   }
 }
 
-// ----- Attendance Matrix Operations -----
+// ----- Attendance Log Operations -----
 
-/** Record attendance using the matrix grid layout */
-export async function recordAttendanceMatrix(
+/** Record attendance to the transactional sheet */
+export async function recordAttendance(
   memberId: string,
-  sessionType: SessionType,
-  date: string
+  sessionType: string,
+  date: string,
+  arrivalStatus: string = 'Present',
+  eventStartTime: string = '07:00'
 ): Promise<{ memberName: string }> {
   const memberName = await getMemberName(memberId);
   if (!memberName) {
@@ -183,35 +185,16 @@ export async function recordAttendanceMatrix(
   const sheets = getSheetsClient();
   const spreadsheetId = getSheetId();
 
-  // Read full Attendance sheet
-  const response = await sheets.spreadsheets.values.get({
+  const timestamp = new Date().toISOString();
+
+  // Log the created session in the Sessions tab if it doesn't exist
+  const sessionsResponse = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${SHEETS.ATTENDANCE}!A:ZZ`,
+    range: `${SHEETS.SESSIONS}!A:B`,
   });
-
-  const matrix = response.data.values ?? [[]];
-  const headers = matrix[0] ?? [];
-  const memberNames = matrix.map((row) => row[0]).slice(1); // Column A values (excluding A1)
-
-  // Find or create session column
-  const sessionHeader = date;
-  let colIndex = headers.indexOf(sessionHeader) + 1; // 1-based index
-  let isNewColumn = false;
-
-  if (colIndex === 0) {
-    isNewColumn = true;
-    colIndex = headers.length + 1;
-    const colLetter = getColumnLetter(colIndex);
-
-    // Write header cell in Row 1 of Attendance
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: `${SHEETS.ATTENDANCE}!${colLetter}1`,
-      valueInputOption: 'RAW',
-      requestBody: { values: [[sessionHeader]] },
-    });
-
-    // Log the created session in the Sessions tab
+  const sessionsRows = sessionsResponse.data.values ?? [];
+  const sessionExists = sessionsRows.some(row => row[0] === date && row[1] === sessionType);
+  if (!sessionExists) {
     await sheets.spreadsheets.values.append({
       spreadsheetId,
       range: `${SHEETS.SESSIONS}!A1`,
@@ -222,79 +205,45 @@ export async function recordAttendanceMatrix(
     });
   }
 
-  // Find or create member row
-  let rowIdx = memberNames.indexOf(memberName) + 2; // 2-based index (header is row 1)
-
-  if (rowIdx === 1) { // not found (indexOf returns -1)
-    // Append member to Column A
-    rowIdx = matrix.length + 1;
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: `${SHEETS.ATTENDANCE}!A${rowIdx}`,
-      valueInputOption: 'RAW',
-      requestBody: { values: [[memberName]] },
-    });
-  }
-
-  const colLetter = getColumnLetter(colIndex);
-
-  if (isNewColumn) {
-    // Fill the new column: "Present" for current member, "Absent" for everyone else
-    const totalRows = Math.max(matrix.length, rowIdx);
-    const colValues: string[][] = [];
-    for (let r = 2; r <= totalRows; r++) {
-      colValues.push([r === rowIdx ? 'Present' : 'Absent']);
-    }
-
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: `${SHEETS.ATTENDANCE}!${colLetter}2:${colLetter}${totalRows}`,
-      valueInputOption: 'RAW',
-      requestBody: { values: colValues },
-    });
-  } else {
-    // Simply mark the member as Present
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: `${SHEETS.ATTENDANCE}!${colLetter}${rowIdx}`,
-      valueInputOption: 'RAW',
-      requestBody: { values: [['Present']] },
-    });
-  }
+  // Append scan record to Attendance sheet
+  await sheets.spreadsheets.values.append({
+    spreadsheetId,
+    range: `${SHEETS.ATTENDANCE}!A1`,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: {
+      values: [[timestamp, memberId, memberName, sessionType, arrivalStatus, eventStartTime]],
+    },
+  });
 
   return { memberName };
 }
 
-/** Check if a member is already marked "Present" in the matrix for this session */
+/** Check if a member is already marked in the attendance log for this session date */
 export async function checkDuplicate(
   memberId: string,
   sessionType: string,
   date: string
 ): Promise<boolean> {
-  const memberName = await getMemberName(memberId);
-  if (!memberName) return false;
-
   const sheets = getSheetsClient();
   const spreadsheetId = getSheetId();
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${SHEETS.ATTENDANCE}!A:ZZ`,
+    range: `${SHEETS.ATTENDANCE}!A:E`,
   });
 
-  const matrix = response.data.values ?? [[]];
-  const headers = matrix[0] ?? [];
-  const memberNames = matrix.map((row) => row[0]).slice(1);
-
-  const sessionHeader = date;
-  const colIndex = headers.indexOf(sessionHeader);
-  const rowIndex = memberNames.indexOf(memberName) + 1;
-
-  if (colIndex === -1 || rowIndex === 0) {
-    return false;
-  }
-
-  return matrix[rowIndex]?.[colIndex] === 'Present';
+  const rows = response.data.values ?? [];
+  // Columns: A: Timestamp, B: Member ID, C: Member Name, D: Session Type, E: Status
+  return rows.slice(1).some((row) => {
+    const rowMemberId = row[1] ?? '';
+    const rowSessionType = row[3] ?? '';
+    const rowTimestamp = row[0] ?? '';
+    return (
+      rowMemberId === memberId &&
+      rowSessionType === sessionType &&
+      rowTimestamp.startsWith(date)
+    );
+  });
 }
 
 // ----- Member Operations -----
