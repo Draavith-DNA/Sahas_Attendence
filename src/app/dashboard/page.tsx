@@ -7,11 +7,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import SessionConfig from '@/components/SessionConfig';
+import { getActiveSession } from '@/lib/session';
+import type { ActiveSession } from '@/lib/session';
 
 export default function DashboardPage() {
   const router = useRouter();
   const [memberCount, setMemberCount] = useState<number | null>(null);
   const [greeting, setGreeting] = useState('');
+  const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
 
   // Set greeting based on time of day
   useEffect(() => {
@@ -19,6 +22,15 @@ export default function DashboardPage() {
     if (hour < 12) setGreeting('Good morning');
     else if (hour < 17) setGreeting('Good afternoon');
     else setGreeting('Good evening');
+  }, []);
+
+  // Fetch active session from localStorage
+  useEffect(() => {
+    const active = getActiveSession();
+    const today = new Date().toISOString().split('T')[0];
+    if (active && active.date === today) {
+      setActiveSession(active);
+    }
   }, []);
 
   // Fetch member count
@@ -46,9 +58,41 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="mb-8">
         <p className="text-[#8a7060] font-bold text-base tracking-wide uppercase">{greeting},</p>
-        <h1 className="text-3xl font-black text-[#3d2314] mt-1 tracking-tight">Technical Head</h1>
+        <h1 className="text-3xl font-black text-[#3d2314] mt-1 tracking-tight">Admin</h1>
         <p className="text-[#8e735b] text-xs font-bold mt-2.5">{todayFormatted}</p>
       </div>
+
+      {/* Active Session Recovery Banner */}
+      {activeSession && (
+        <div className="mb-6 p-4 bg-[#f7f2ed] border border-[#e8dfd5] rounded-2xl flex items-center justify-between animate-fade-in shadow-sm">
+          <div className="flex-1 min-w-0 pr-3">
+            <span className="text-[#8e735b] text-[10px] font-bold uppercase tracking-wider block">
+              Active Session Found
+            </span>
+            <h3 className="text-[#3d2314] text-sm font-bold truncate mt-0.5">
+              {activeSession.sessionType}
+            </h3>
+            <p className="text-[#8a7060] text-xs font-semibold mt-0.5">
+              Started at {activeSession.startTime} today
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              handleStartScanning(
+                activeSession.sessionType,
+                activeSession.date,
+                activeSession.startTime
+              );
+            }}
+            className="flex items-center gap-1.5 px-4 py-2 bg-[#8e735b] hover:bg-[#765d48] text-white text-xs font-bold rounded-xl transition-all duration-200 shadow-sm flex-shrink-0"
+          >
+            Resume
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 gap-3 mb-8">

@@ -5,6 +5,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { getActiveSession, saveActiveSession } from '@/lib/session';
 
 interface SessionConfigProps {
   onStartScanning: (sessionName: string, date: string, startTime: string) => void;
@@ -39,6 +40,23 @@ export default function SessionConfig({ onStartScanning }: SessionConfigProps) {
         finalSessionName = `Sahas Sunday (${sundaySub})`;
       }
     }
+
+    // Check for active session mismatch on same date
+    const active = getActiveSession();
+    if (active && active.date === date) {
+      if (
+        active.sessionType !== finalSessionName ||
+        active.startTime !== startTime
+      ) {
+        const confirmMsg = `Warning: You already have an active session for '${active.sessionType}' starting at ${active.startTime} today.\n\nStarting a new session with different parameters ('${finalSessionName}' starting at ${startTime}) may split today's attendance logs.\n\nAre you sure you want to proceed?`;
+        if (!window.confirm(confirmMsg)) {
+          return;
+        }
+      }
+    }
+
+    // Save to localStorage active session
+    saveActiveSession(finalSessionName, date, startTime);
 
     onStartScanning(finalSessionName, date, startTime);
   }, [category, sundaySub, customText, date, startTime, onStartScanning]);

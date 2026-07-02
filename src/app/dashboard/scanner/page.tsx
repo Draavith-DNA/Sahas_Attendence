@@ -12,6 +12,7 @@ import ScanHistory from '@/components/ScanHistory';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import { playSuccess, playError, playWarning, playLateBeep, playVeryLateBeep } from '@/lib/beep';
+import { clearActiveSession } from '@/lib/session';
 import type { FeedbackType } from '@/components/ScanFeedback';
 
 interface ScanRecord {
@@ -251,12 +252,25 @@ function ScannerContent() {
             <h2 className="text-lg font-bold text-[#3d2314]">
               Scanned ({scanCount})
             </h2>
-            <button
-              onClick={() => setShowHistory(false)}
-              className="text-[#8e735b] text-sm font-bold hover:underline"
-            >
-              Back to Scanner
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  if (window.confirm("Are you sure you want to end this active session? This will clear the active session configuration.")) {
+                    clearActiveSession();
+                    router.push('/dashboard');
+                  }
+                }}
+                className="text-rose-600 text-sm font-bold border border-rose-200 bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100 transition-colors"
+              >
+                End Session
+              </button>
+              <button
+                onClick={() => setShowHistory(false)}
+                className="text-[#8e735b] text-sm font-bold hover:underline"
+              >
+                Back to Scanner
+              </button>
+            </div>
           </div>
           <ScanHistory records={scanRecords} />
         </div>
