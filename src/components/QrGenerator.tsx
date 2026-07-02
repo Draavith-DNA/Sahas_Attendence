@@ -17,22 +17,27 @@ interface QrGeneratorProps {
 // Modify these values to align overlays precisely with your sahas-template.jpg design
 const TEMPLATE_CONFIG = {
   qr: {
-    topPercent: '52%', // CSS vertical positioning
-    widthPercent: '52%', // CSS width proportion (More bigger!)
-    canvasY: 670,      // Canvas vertical coordinate (pixels)
-    canvasSize: 480,   // Canvas QR size (pixels) (More bigger!)
-    bgPadding: 16,     // White background padding (pixels)
-    borderRadius: 24,  // White background border radius (pixels)
+    topPercent: '52%',      // Starts 52% down from the top
+    widthPercent: '52%',    // Takes up 52% height/width space
+    canvasY: 670,
+    canvasSize: 480,
+    bgPadding: 16,
+    borderRadius: 24,
   },
   name: {
-    bottomPercent: '13%', // CSS vertical positioning (centered text zone)
-    canvasY: 1210,        // Canvas vertical coordinate (pixels)
-    fontSize: 40,         // Canvas font size (pixels)
-    color: '#4a2711',     // Dark Brown color
+    topPercent: '81.5%',    // Placed right below the QR code block (0.5 to 0.7 equivalent gap)
+    canvasY: 1190,          // Adjusted canvas Y coordinates to match the new flow
+    fontSize: 42,           // Made slightly larger for a bold, dominant look
+    fontWeight: '700',      // Tailwind bold or canvas bold context
+    color: '#4a2711',       // Your aesthetic Dark Brown
   },
   year: {
-    fontSize: 40,         // Canvas font size (pixels)
-    color: '#b59a83',     // Light Brown color
+    topPercent: '86%',      // Pushed further down below the name (1.5 to 1.7 equivalent gap)
+    canvasY: 1260,          // Pushed lower down on the canvas render
+    fontSize: 34,           // Sleeker, smaller size for secondary information
+    fontWeight: '500',      // Medium weight for visual contrast
+    color: '#b59a83',       // Your aesthetic Light Brown
+    text: '2026 - 27'       // Hardcoded year string for the batch
   }
 };
 
@@ -237,14 +242,35 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
               />
             </div>
 
-            {/* 2. Member Name & Year Text Overlay */}
+            {/* 2. Member Name Text Overlay */}
             <div
-              style={{ bottom: TEMPLATE_CONFIG.name.bottomPercent }}
+              style={{ top: TEMPLATE_CONFIG.name.topPercent }}
               className="absolute left-0 right-0 text-center px-4"
             >
-              <p className="font-bold text-sm sm:text-base truncate drop-shadow-sm">
-                <span style={{ color: TEMPLATE_CONFIG.name.color }}>{registeredName}</span>
-                <span className="whitespace-pre" style={{ color: TEMPLATE_CONFIG.year.color }}>   2026-27</span>
+              <p
+                style={{
+                  color: TEMPLATE_CONFIG.name.color,
+                  fontWeight: TEMPLATE_CONFIG.name.fontWeight as any,
+                }}
+                className="text-sm sm:text-base truncate drop-shadow-sm"
+              >
+                {registeredName}
+              </p>
+            </div>
+
+            {/* 3. Year Text Overlay */}
+            <div
+              style={{ top: TEMPLATE_CONFIG.year.topPercent }}
+              className="absolute left-0 right-0 text-center"
+            >
+              <p
+                style={{
+                  color: TEMPLATE_CONFIG.year.color,
+                  fontWeight: TEMPLATE_CONFIG.year.fontWeight as any,
+                }}
+                className="text-[10px] sm:text-xs tracking-wider"
+              >
+                {TEMPLATE_CONFIG.year.text}
               </p>
             </div>
           </div>
