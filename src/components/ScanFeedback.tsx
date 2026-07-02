@@ -39,16 +39,16 @@ export default function ScanFeedback({
 
   const config = {
     success: {
-      bg: 'from-emerald-500/95 to-green-600/95',
+      bg: 'from-[#8e735b] to-[#a88c74]',
       icon: (
         <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
         </svg>
       ),
-      ring: 'ring-emerald-300/30',
+      ring: 'ring-[#c5a880]/30',
     },
     duplicate: {
-      bg: 'from-amber-500/95 to-orange-600/95',
+      bg: 'from-amber-500 to-amber-600',
       icon: (
         <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -57,7 +57,7 @@ export default function ScanFeedback({
       ring: 'ring-amber-300/30',
     },
     error: {
-      bg: 'from-rose-500/95 to-red-600/95',
+      bg: 'from-rose-500 to-rose-600',
       icon: (
         <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
@@ -80,7 +80,7 @@ export default function ScanFeedback({
       }}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-[#3d2314]/50 backdrop-blur-sm" />
 
       {/* Content */}
       <div

@@ -153,7 +153,7 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
       {/* Input Form */}
       <div className="space-y-3">
         <div>
-          <label htmlFor="member-name" className="block text-sm font-medium text-stone-500 mb-1.5">
+          <label htmlFor="member-name" className="block text-sm font-semibold text-[#8a7060] mb-1.5">
             Member Name
           </label>
           <input
@@ -162,11 +162,11 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Enter full name"
-            className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-850 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all text-sm"
+            className="w-full px-4 py-3 bg-white border border-[#e8dfd5] rounded-xl text-[#3d2314] placeholder:text-[#b59a83] focus:outline-none focus:ring-2 focus:ring-[#8e735b]/30 focus:border-[#8e735b] transition-all text-sm font-medium"
           />
         </div>
         <div>
-          <label htmlFor="member-email" className="block text-sm font-medium text-stone-500 mb-1.5">
+          <label htmlFor="member-email" className="block text-sm font-semibold text-[#8a7060] mb-1.5">
             Email Address
           </label>
           <input
@@ -175,18 +175,18 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="member@example.com"
-            className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-855 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all text-sm"
+            className="w-full px-4 py-3 bg-white border border-[#e8dfd5] rounded-xl text-[#3d2314] placeholder:text-[#b59a83] focus:outline-none focus:ring-2 focus:ring-[#8e735b]/30 focus:border-[#8e735b] transition-all text-sm font-medium"
           />
         </div>
 
         {error && (
-          <p className="text-rose-600 text-sm bg-rose-500/10 px-3 py-2 rounded-lg">{error}</p>
+          <p className="text-rose-600 text-sm bg-rose-500/10 px-3 py-2 rounded-lg font-medium">{error}</p>
         )}
 
         <button
           onClick={handleGenerate}
           disabled={isLoading || !name.trim() || !email.trim()}
-          className="w-full py-3 px-4 bg-sky-600 hover:bg-sky-500 disabled:bg-stone-200 disabled:text-stone-400 text-white font-semibold rounded-xl transition-all duration-200 active:scale-[0.98]"
+          className="w-full py-3 px-4 bg-[#8e735b] hover:bg-[#765d48] disabled:bg-[#f7f2ed] disabled:text-[#b59a83] text-white font-bold rounded-xl transition-all duration-200 active:scale-[0.98]"
         >
           {isLoading ? (
             <span className="flex items-center justify-center gap-2">
@@ -201,8 +201,8 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
 
       {/* Generated QR Card Overlay View */}
       {generatedId && registeredName && (
-        <div className="bg-stone-50 border border-stone-200 rounded-2xl p-6 flex flex-col items-center space-y-5 animate-fade-in shadow-sm">
-          <div className="inline-flex items-center gap-2 text-sky-600 text-sm font-semibold bg-sky-500/10 px-3 py-1.5 rounded-full">
+        <div className="bg-[#f7f2ed] border border-[#e8dfd5] rounded-2xl p-6 flex flex-col items-center space-y-5 animate-fade-in shadow-sm">
+          <div className="inline-flex items-center gap-2 text-[#8e735b] text-sm font-bold bg-[#8e735b]/10 px-3 py-1.5 rounded-full">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
@@ -210,7 +210,7 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
           </div>
 
           {/* Interactive Layered Card Container */}
-          <div className="relative w-full max-w-[280px] aspect-[900/1380] rounded-2xl overflow-hidden shadow-lg border border-stone-250 bg-[url('/sahas-template.jpg')] bg-cover bg-center bg-no-repeat">
+          <div className="relative w-full max-w-[280px] aspect-[900/1380] rounded-2xl overflow-hidden shadow-lg border border-[#e8dfd5] bg-[url('/sahas-template.jpg')] bg-cover bg-center bg-no-repeat">
             {/* 1. Dynamic QR Code Absolute Overlay */}
             <div
               ref={qrRef}
@@ -218,7 +218,7 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
                 top: TEMPLATE_CONFIG.qr.topPercent,
                 width: TEMPLATE_CONFIG.qr.widthPercent,
               }}
-              className="absolute left-1/2 -translate-x-1/2 bg-white p-2 border border-stone-200 shadow-sm flex items-center justify-center aspect-square"
+              className="absolute left-1/2 -translate-x-1/2 bg-white p-2 border border-[#e8dfd5] shadow-sm flex items-center justify-center aspect-square"
             >
               <QRCodeCanvas
                 value={generatedId}
@@ -257,7 +257,7 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
                   fontWeight: TEMPLATE_CONFIG.year.fontWeight as any,
                   fontFamily: TEMPLATE_CONFIG.year.fontFamily,
                 }}
-                className="text-[10px] sm:text-xs tracking-wider"
+                className="text-[10px] sm:text-xs tracking-wider font-semibold"
               >
                 {TEMPLATE_CONFIG.year.text}
               </p>
@@ -267,7 +267,7 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
           {/* Download trigger */}
           <button
             onClick={handleDownload}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-stone-200 hover:bg-stone-300 text-stone-700 font-bold rounded-xl transition-all duration-200 active:scale-[0.98] border border-stone-250 shadow-sm text-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-[#f7f2ed] text-[#3d2314] font-bold rounded-xl transition-all duration-200 active:scale-[0.98] border border-[#e8dfd5] shadow-sm text-sm"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

@@ -84,14 +84,12 @@ export default function LoginPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleDigit, handleDelete, handleSubmit]);
 
-  const digits = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
-
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#faf7f2] px-6 py-12">
+  const digits = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white px-6 py-12">
       {/* Background gradient orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-sky-500/5 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-sky-500/5 blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-[#c5a880]/15 blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-[#c5a880]/15 blur-3xl" />
       </div>
 
       <div className="relative z-10 w-full max-w-sm flex flex-col items-center">
@@ -105,8 +103,8 @@ export default function LoginPage() {
               className="max-w-full max-h-full object-contain animate-float"
             />
           </div>
-          <h1 className="text-3xl font-bold text-stone-900 tracking-tight">SAHAS</h1>
-          <p className="text-stone-500 text-sm mt-1.5 font-medium">Attendance System</p>
+          <h1 className="text-3xl font-black text-[#3d2314] tracking-tight">SAHAS</h1>
+          <p className="text-[#8a7060] text-sm mt-1.5 font-semibold">Attendance System</p>
         </div>
 
         {/* PIN Dots */}
@@ -116,8 +114,8 @@ export default function LoginPage() {
               key={i}
               className={`w-3.5 h-3.5 rounded-full border-2 transition-all duration-200 ${
                 i < pin.length
-                  ? 'bg-sky-500 border-sky-500 scale-110'
-                  : 'border-stone-300 bg-transparent'
+                  ? 'bg-[#c5a880] border-[#c5a880] scale-110'
+                  : 'border-[#e3d5ca] bg-transparent'
               }`}
             />
           ))}
@@ -125,7 +123,7 @@ export default function LoginPage() {
 
         {/* Error Message */}
         {error && (
-          <p className="text-rose-600 text-sm mb-4 animate-fade-in font-medium">{error}</p>
+          <p className="text-rose-600 text-sm mb-4 animate-fade-in font-semibold">{error}</p>
         )}
 
         {/* PIN Pad */}
@@ -141,7 +139,7 @@ export default function LoginPage() {
                   key={index}
                   onClick={handleDelete}
                   disabled={pin.length === 0}
-                  className="aspect-square rounded-2xl flex items-center justify-center text-stone-400 hover:text-stone-600 hover:bg-stone-200/50 transition-all duration-150 active:scale-90 disabled:opacity-30"
+                  className="aspect-square rounded-2xl flex items-center justify-center text-[#b59a83] hover:text-[#3d2314] hover:bg-[#f7f2ed] transition-all duration-150 active:scale-90 disabled:opacity-30"
                 >
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
@@ -160,7 +158,7 @@ export default function LoginPage() {
                 key={index}
                 onClick={() => handleDigit(digit)}
                 disabled={isLoading}
-                className="aspect-square rounded-2xl bg-stone-100/80 border border-stone-200 text-stone-800 text-2xl font-bold flex items-center justify-center hover:bg-stone-200/60 hover:border-stone-300 transition-all duration-150 active:scale-90 active:bg-sky-500/10 active:border-sky-500/30 disabled:opacity-50"
+                className="aspect-square rounded-2xl bg-[#f7f2ed]/80 border border-[#e8dfd5] text-[#3d2314] text-2xl font-bold flex items-center justify-center hover:bg-[#e8dfd5] hover:border-[#c5a880] transition-all duration-150 active:scale-90 active:bg-[#c5a880]/15 active:border-[#c5a880]/30 disabled:opacity-50"
               >
                 {digit}
               </button>
@@ -170,14 +168,14 @@ export default function LoginPage() {
 
         {/* Loading indicator */}
         {isLoading && (
-          <div className="mt-6 flex items-center gap-2 text-sky-600 animate-fade-in">
-            <div className="w-4 h-4 border-2 border-sky-500/30 border-t-sky-500 rounded-full animate-spin" />
-            <span className="text-sm font-medium">Verifying…</span>
+          <div className="mt-6 flex items-center gap-2 text-[#8e735b] animate-fade-in">
+            <div className="w-4 h-4 border-2 border-[#8e735b]/30 border-t-[#8e735b] rounded-full animate-spin" />
+            <span className="text-sm font-semibold">Verifying…</span>
           </div>
         )}
 
         {/* Footer hint */}
-        <p className="mt-10 text-stone-400 text-xs text-center font-medium">
+        <p className="mt-10 text-[#b59a83] text-xs text-center font-bold">
           Enter your 6-digit admin PIN to continue
         </p>
       </div>

@@ -27,12 +27,12 @@ export default function OfflineIndicator() {
       }`}
     >
       <div
-        className={`flex items-center justify-center gap-2 py-2 px-4 text-sm font-medium ${
+        className={`flex items-center justify-center gap-2 py-2 px-4 text-sm font-bold ${
           !isOnline
-            ? 'bg-amber-500/90 text-amber-950 backdrop-blur-sm'
+            ? 'bg-amber-500 text-amber-950 backdrop-blur-sm'
             : isSyncing
-            ? 'bg-sky-500/90 text-sky-950 backdrop-blur-sm'
-            : 'bg-emerald-500/90 text-emerald-950 backdrop-blur-sm'
+            ? 'bg-[#b59a83] text-[#3d2314] backdrop-blur-sm'
+            : 'bg-emerald-500 text-emerald-950 backdrop-blur-sm'
         }`}
       >
         {!isOnline ? (

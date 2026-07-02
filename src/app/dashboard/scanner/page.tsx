@@ -168,33 +168,33 @@ function ScannerContent() {
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 flex flex-col">
+    <div className="fixed inset-0 bg-white flex flex-col">
       {/* Top Bar */}
-      <div className="relative z-10 flex items-center justify-between px-4 py-3 bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/50">
+      <div className="relative z-10 flex items-center justify-between px-4 py-3 bg-white/90 backdrop-blur-xl border-b border-[#e8dfd5]">
         <button
           onClick={() => router.push('/dashboard')}
-          className="flex items-center gap-2 text-zinc-400 hover:text-zinc-200 transition-colors"
+          className="flex items-center gap-2 text-[#8a7060] hover:text-[#3d2314] transition-colors"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          <span className="text-sm">Back</span>
+          <span className="text-sm font-bold">Back</span>
         </button>
 
         <div className="text-center">
-          <p className="text-zinc-200 text-sm font-semibold">{sessionType}</p>
-          <p className="text-zinc-500 text-[10px]">{date}</p>
+          <p className="text-[#3d2314] text-sm font-bold">{sessionType}</p>
+          <p className="text-[#8a7060] text-[10px] font-bold">{date}</p>
         </div>
 
         <button
           onClick={() => setShowHistory(!showHistory)}
-          className="relative flex items-center gap-1 text-zinc-400 hover:text-zinc-200 transition-colors"
+          className="relative flex items-center gap-1 text-[#8a7060] hover:text-[#3d2314] transition-colors"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
           {scanCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-[10px] text-white font-bold rounded-full flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#c5a880] text-[10px] text-white font-bold rounded-full flex items-center justify-center">
               {scanCount}
             </span>
           )}
@@ -203,14 +203,14 @@ function ScannerContent() {
 
       {/* Scanner / History Toggle */}
       {showHistory ? (
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 bg-white">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-zinc-100">
+            <h2 className="text-lg font-bold text-[#3d2314]">
               Scanned ({scanCount})
             </h2>
             <button
               onClick={() => setShowHistory(false)}
-              className="text-emerald-400 text-sm font-medium"
+              className="text-[#8e735b] text-sm font-bold hover:underline"
             >
               Back to Scanner
             </button>
@@ -218,21 +218,23 @@ function ScannerContent() {
           <ScanHistory records={scanRecords} />
         </div>
       ) : (
-        <div className="flex-1 relative">
-          <QrScanner
-            onScan={handleScan}
-            onError={handleScanError}
-            enabled={!feedback}
-          />
+        <div className="flex-1 relative bg-white flex items-center justify-center p-6">
+          <div className="w-full max-w-sm aspect-square">
+            <QrScanner
+              onScan={handleScan}
+              onError={handleScanError}
+              enabled={!feedback}
+            />
+          </div>
 
           {/* Scan counter overlay */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900/80 backdrop-blur-sm px-5 py-2.5 rounded-full border border-zinc-700/50 flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-zinc-200 text-sm font-medium">
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-[#f7f2ed]/90 backdrop-blur-sm px-5 py-2.5 rounded-full border border-[#e8dfd5] flex items-center gap-3 shadow-md">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#c5a880] animate-pulse-glow" />
+            <span className="text-[#3d2314] text-sm font-bold">
               {scanCount} scanned
             </span>
             {!isOnline && (
-              <span className="text-amber-400 text-xs">• Offline</span>
+              <span className="text-amber-600 text-xs font-bold">• Offline</span>
             )}
           </div>
         </div>
@@ -255,8 +257,8 @@ export default function ScannerPage() {
   return (
     <Suspense
       fallback={
-        <div className="fixed inset-0 bg-zinc-950 flex items-center justify-center">
-          <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+        <div className="fixed inset-0 bg-white flex items-center justify-center">
+          <div className="w-8 h-8 border-3 border-[#8e735b] border-t-transparent rounded-full animate-spin" />
         </div>
       }
     >

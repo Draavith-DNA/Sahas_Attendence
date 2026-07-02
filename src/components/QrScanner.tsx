@@ -15,10 +15,10 @@ const Scanner = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex items-center justify-center h-full bg-zinc-900 rounded-2xl">
+      <div className="flex items-center justify-center h-full bg-[#f7f2ed] border border-[#e8dfd5] rounded-2xl">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-zinc-400 text-sm">Initializing camera…</span>
+          <div className="w-10 h-10 border-3 border-[#8e735b] border-t-transparent rounded-full animate-spin" />
+          <span className="text-[#8a7060] text-sm font-semibold">Initializing camera…</span>
         </div>
       </div>
     ),
@@ -87,22 +87,22 @@ export default function QrScanner({ onScan, onError, enabled = true }: QrScanner
 
   if (cameraError) {
     return (
-      <div className="flex items-center justify-center h-full bg-zinc-900 rounded-2xl p-6">
+      <div className="flex items-center justify-center h-full bg-[#f7f2ed] border border-[#e8dfd5] rounded-2xl p-6">
         <div className="text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-500/10 flex items-center justify-center">
-            <svg className="w-8 h-8 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-8 h-8 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
             </svg>
           </div>
-          <p className="text-rose-400 font-medium mb-2">Camera Error</p>
-          <p className="text-zinc-400 text-sm">{cameraError}</p>
+          <p className="text-rose-600 font-bold mb-2">Camera Error</p>
+          <p className="text-[#8a7060] text-sm font-semibold">{cameraError}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative w-full h-full overflow-hidden rounded-2xl bg-black">
+    <div className="relative w-full h-full overflow-hidden rounded-2xl bg-[#3d2314] border border-[#e8dfd5] shadow-inner">
       {/* Scanner */}
       <Scanner
         onScan={handleScan}
@@ -134,20 +134,20 @@ export default function QrScanner({ onScan, onError, enabled = true }: QrScanner
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative w-64 h-64">
             {/* Corner brackets */}
-            <div className="absolute top-0 left-0 w-8 h-8 border-t-3 border-l-3 border-emerald-400 rounded-tl-lg" />
-            <div className="absolute top-0 right-0 w-8 h-8 border-t-3 border-r-3 border-emerald-400 rounded-tr-lg" />
-            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-3 border-l-3 border-emerald-400 rounded-bl-lg" />
-            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-3 border-r-3 border-emerald-400 rounded-br-lg" />
+            <div className="absolute top-0 left-0 w-8 h-8 border-t-3 border-l-3 border-[#c5a880] rounded-tl-lg" />
+            <div className="absolute top-0 right-0 w-8 h-8 border-t-3 border-r-3 border-[#c5a880] rounded-tr-lg" />
+            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-3 border-l-3 border-[#c5a880] rounded-bl-lg" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-3 border-r-3 border-[#c5a880] rounded-br-lg" />
 
             {/* Scanning line animation */}
             {enabled && !isThrottled && (
-              <div className="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent animate-scan-line" />
+              <div className="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-[#c5a880] to-transparent animate-scan-line" />
             )}
           </div>
         </div>
 
         {/* Dim overlay outside scanning area */}
-        <div className="absolute inset-0 bg-black/40" style={{
+        <div className="absolute inset-0 bg-[#3d2314]/45" style={{
           maskImage: 'radial-gradient(ellipse 160px 160px at center, transparent 50%, black 51%)',
           WebkitMaskImage: 'radial-gradient(ellipse 160px 160px at center, transparent 50%, black 51%)',
         }} />
@@ -155,7 +155,7 @@ export default function QrScanner({ onScan, onError, enabled = true }: QrScanner
 
       {/* Throttle indicator */}
       {isThrottled && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-emerald-500/20 text-emerald-300 text-sm px-4 py-2 rounded-full backdrop-blur-sm border border-emerald-500/30">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-[#f7f2ed] text-[#3d2314] text-xs font-bold px-4 py-2 rounded-full border border-[#e8dfd5] shadow-md">
           ✓ Processing…
         </div>
       )}

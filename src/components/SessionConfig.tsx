@@ -46,7 +46,7 @@ export default function SessionConfig({ onStartScanning }: SessionConfigProps) {
     <div className="space-y-6">
       {/* Category Selector */}
       <div>
-        <label className="block text-sm font-medium text-stone-500 mb-3">
+        <label className="block text-sm font-semibold text-[#8a7060] mb-3">
           Session Category
         </label>
         <div className="grid grid-cols-3 gap-2">
@@ -56,12 +56,7 @@ export default function SessionConfig({ onStartScanning }: SessionConfigProps) {
               meeting: 'Meeting',
               others: 'Others',
             };
-            const activeColors = {
-              sunday: 'bg-sky-500/10 text-sky-700 border-sky-400/50 ring-2 ring-sky-500/10',
-              meeting: 'bg-sky-500/10 text-sky-700 border-sky-400/50 ring-2 ring-sky-500/10',
-              others: 'bg-sky-500/10 text-sky-700 border-sky-400/50 ring-2 ring-sky-500/10',
-            };
-            const inactiveColors = 'bg-stone-100 border-stone-200 text-stone-600 hover:text-stone-800 hover:bg-stone-200/50';
+            const isActive = category === cat;
 
             return (
               <button
@@ -71,8 +66,10 @@ export default function SessionConfig({ onStartScanning }: SessionConfigProps) {
                   setCategory(cat);
                   setCustomText(''); // Reset custom description
                 }}
-                className={`py-3 px-2 rounded-xl text-xs font-semibold border text-center transition-all duration-200 ${
-                  category === cat ? activeColors[cat] : inactiveColors
+                className={`py-3 px-2 rounded-xl text-xs font-bold border text-center transition-all duration-200 ${
+                  isActive
+                    ? 'bg-[#8e735b] text-white border-[#8e735b] shadow-sm'
+                    : 'bg-[#f7f2ed] border-[#e8dfd5] text-[#8a7060] hover:text-[#3d2314] hover:bg-[#e8dfd5]'
                 }`}
               >
                 {labels[cat]}
@@ -84,8 +81,8 @@ export default function SessionConfig({ onStartScanning }: SessionConfigProps) {
 
       {/* Sahas Sunday Sub-Options */}
       {category === 'sunday' && (
-        <div className="space-y-3 p-4 bg-stone-100/50 border border-stone-200/50 rounded-2xl animate-fade-in">
-          <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wider">
+        <div className="space-y-3 p-4 bg-[#f7f2ed]/55 border border-[#e8dfd5] rounded-2xl animate-fade-in">
+          <label className="block text-xs font-bold text-[#8a7060] uppercase tracking-wider">
             Select Sunday Activity
           </label>
           <div className="grid grid-cols-2 gap-2">
@@ -99,10 +96,10 @@ export default function SessionConfig({ onStartScanning }: SessionConfigProps) {
                     setSundaySub(sub);
                     setCustomText(''); // Reset description
                   }}
-                  className={`py-2.5 px-3 rounded-lg text-xs font-medium border transition-all duration-200 ${
+                  className={`py-2.5 px-3 rounded-lg text-xs font-semibold border transition-all duration-200 ${
                     isActive
-                      ? 'bg-sky-500/10 text-sky-700 border-sky-500/30 font-semibold'
-                      : 'bg-stone-50 border-stone-200 text-stone-500 hover:text-stone-700 hover:bg-stone-100'
+                      ? 'bg-[#a88c74] text-white border-[#a88c74] font-bold shadow-sm'
+                      : 'bg-white border-[#e8dfd5] text-[#8a7060] hover:text-[#3d2314] hover:bg-[#f7f2ed]'
                   }`}
                 >
                   {sub}
@@ -116,7 +113,7 @@ export default function SessionConfig({ onStartScanning }: SessionConfigProps) {
       {/* Dynamic Text Input for "Others" category or Sunday -> "Others" sub-option */}
       {((category === 'sunday' && sundaySub === 'Others') || category === 'others') && (
         <div className="space-y-1.5 animate-fade-in">
-          <label htmlFor="custom-session-text" className="block text-sm font-medium text-stone-500">
+          <label htmlFor="custom-session-text" className="block text-sm font-semibold text-[#8a7060]">
             {category === 'sunday' ? 'Describe Sunday Activity' : 'Specify Session Type'}
           </label>
           <input
@@ -125,14 +122,14 @@ export default function SessionConfig({ onStartScanning }: SessionConfigProps) {
             value={customText}
             onChange={(e) => setCustomText(e.target.value)}
             placeholder={category === 'sunday' ? 'e.g. Guest Seminar, Community outreach' : 'e.g. Board Meet, Workshop'}
-            className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all text-sm"
+            className="w-full px-4 py-3 bg-white border border-[#e8dfd5] rounded-xl text-[#3d2314] placeholder:text-[#b59a83] focus:outline-none focus:ring-2 focus:ring-[#8e735b]/30 focus:border-[#8e735b] transition-all text-sm font-medium"
           />
         </div>
       )}
 
       {/* Date Picker */}
       <div>
-        <label htmlFor="session-date" className="block text-sm font-medium text-stone-500 mb-1.5">
+        <label htmlFor="session-date" className="block text-sm font-semibold text-[#8a7060] mb-1.5">
           Session Date
         </label>
         <input
@@ -140,14 +137,14 @@ export default function SessionConfig({ onStartScanning }: SessionConfigProps) {
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all"
+          className="w-full px-4 py-3 bg-white border border-[#e8dfd5] rounded-xl text-[#3d2314] focus:outline-none focus:ring-2 focus:ring-[#8e735b]/30 focus:border-[#8e735b] transition-all font-medium"
         />
       </div>
 
       {/* Start Button */}
       <button
         onClick={handleStart}
-        className="w-full py-4 px-6 bg-gradient-to-r from-sky-600 to-sky-500 hover:from-sky-500 hover:to-sky-400 text-white font-bold text-lg rounded-xl transition-all duration-200 active:scale-[0.98] shadow-lg shadow-sky-500/20 flex items-center justify-center gap-3"
+        className="w-full py-4 px-6 bg-gradient-to-r from-[#8e735b] to-[#a88c74] hover:from-[#765d48] hover:to-[#8e735b] text-white font-bold text-lg rounded-xl transition-all duration-200 active:scale-[0.98] shadow-lg shadow-[#8e735b]/10 flex items-center justify-center gap-3"
       >
         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
