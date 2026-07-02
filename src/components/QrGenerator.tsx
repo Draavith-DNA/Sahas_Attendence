@@ -18,23 +18,17 @@ interface QrGeneratorProps {
 const TEMPLATE_CONFIG = {
   qr: {
     topPercent: '52%', // CSS vertical positioning
-    widthPercent: '42%', // CSS width proportion
-    canvasY: 720,      // Canvas vertical coordinate (pixels)
-    canvasSize: 378,   // Canvas QR size (pixels)
+    widthPercent: '52%', // CSS width proportion (More bigger!)
+    canvasY: 670,      // Canvas vertical coordinate (pixels)
+    canvasSize: 480,   // Canvas QR size (pixels) (More bigger!)
     bgPadding: 16,     // White background padding (pixels)
     borderRadius: 24,  // White background border radius (pixels)
   },
   name: {
-    bottomPercent: '16%', // CSS vertical positioning
-    canvasY: 1160,        // Canvas vertical coordinate (pixels)
-    fontSize: 38,         // Canvas font size (pixels)
-    color: '#1c1917',     // Canvas font color
-  },
-  id: {
-    bottomPercent: '10%', // CSS vertical positioning
-    canvasY: 1245,        // Canvas vertical coordinate (pixels)
-    fontSize: 28,         // Canvas font size (pixels)
-    color: '#0284c7',     // Canvas font color
+    bottomPercent: '13%', // CSS vertical positioning (centered text zone)
+    canvasY: 1210,        // Canvas vertical coordinate (pixels)
+    fontSize: 40,         // Canvas font size (pixels)
+    color: '#dfcfc1',     // Canvas font color (Lightest brownish)
   }
 };
 
@@ -126,19 +120,14 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
 
       ctx.drawImage(canvas, qrX, canvasY, canvasSize, canvasSize);
 
-      // 3. Draw Member Name
+      // 3. Draw Member Name & Year (e.g. John Doe (2026-27))
+      const displayName = `${registeredName} (2026-27)`;
       ctx.fillStyle = TEMPLATE_CONFIG.name.color;
       ctx.font = `bold ${TEMPLATE_CONFIG.name.fontSize}px Inter, system-ui, sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(registeredName, cardWidth / 2, TEMPLATE_CONFIG.name.canvasY);
+      ctx.fillText(displayName, cardWidth / 2, TEMPLATE_CONFIG.name.canvasY);
 
-      // 4. Draw Member ID
-      ctx.fillStyle = TEMPLATE_CONFIG.id.color;
-      ctx.font = `bold ${TEMPLATE_CONFIG.id.fontSize}px Courier New, monospace`;
-      ctx.textAlign = 'center';
-      ctx.fillText(generatedId, cardWidth / 2, TEMPLATE_CONFIG.id.canvasY);
-
-      // 5. Trigger download
+      // 4. Trigger download
       const link = document.createElement('a');
       link.download = `${generatedId}.png`;
       link.href = exportCanvas.toDataURL('image/png');
@@ -227,23 +216,16 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
               />
             </div>
 
-            {/* 2. Member Name Text Overlay */}
+            {/* 2. Member Name & Year Text Overlay */}
             <div
               style={{ bottom: TEMPLATE_CONFIG.name.bottomPercent }}
               className="absolute left-0 right-0 text-center px-4"
             >
-              <p className="text-stone-900 font-bold text-sm sm:text-base truncate drop-shadow-sm">
-                {registeredName}
-              </p>
-            </div>
-
-            {/* 3. Member ID Text Overlay */}
-            <div
-              style={{ bottom: TEMPLATE_CONFIG.id.bottomPercent }}
-              className="absolute left-0 right-0 text-center"
-            >
-              <p className="text-sky-600 font-bold font-mono text-xs tracking-wider">
-                {generatedId}
+              <p
+                style={{ color: TEMPLATE_CONFIG.name.color }}
+                className="font-bold text-sm sm:text-base truncate drop-shadow-sm"
+              >
+                {registeredName} (2026-27)
               </p>
             </div>
           </div>
