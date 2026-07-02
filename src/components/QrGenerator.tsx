@@ -27,7 +27,7 @@ const TEMPLATE_CONFIG = {
   name: {
     topPercent: '68%',      // Shifted safely down below the box
     canvasY: 960,
-    fontSize: 48,           // Slightly larger, crisp size
+    fontSize: 64,           // Crisp, dominant large size
     fontFamily: 'Georgia, serif',
     fontWeight: 'bold',
     color: '#1a1a1a',       // Deep high-contrast dark color
@@ -240,7 +240,7 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
                   fontWeight: TEMPLATE_CONFIG.name.fontWeight as any,
                   fontFamily: TEMPLATE_CONFIG.name.fontFamily,
                 }}
-                className="text-sm sm:text-base truncate drop-shadow-sm"
+                className="text-base sm:text-lg font-bold truncate drop-shadow-sm"
               >
                 {registeredName}
               </p>
