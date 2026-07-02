@@ -194,7 +194,7 @@ export async function recordAttendanceMatrix(
   const memberNames = matrix.map((row) => row[0]).slice(1); // Column A values (excluding A1)
 
   // Find or create session column
-  const sessionHeader = `${date} (${sessionType})`;
+  const sessionHeader = date;
   let colIndex = headers.indexOf(sessionHeader) + 1; // 1-based index
   let isNewColumn = false;
 
@@ -286,7 +286,7 @@ export async function checkDuplicate(
   const headers = matrix[0] ?? [];
   const memberNames = matrix.map((row) => row[0]).slice(1);
 
-  const sessionHeader = `${date} (${sessionType})`;
+  const sessionHeader = date;
   const colIndex = headers.indexOf(sessionHeader);
   const rowIndex = memberNames.indexOf(memberName) + 1;
 

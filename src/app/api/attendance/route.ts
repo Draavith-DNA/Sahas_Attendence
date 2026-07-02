@@ -56,7 +56,22 @@ export async function GET(request: NextRequest) {
       nameToId.set(m.name, m.memberId);
     }
 
-    // 2. Fetch attendance matrix
+    // 2. Fetch sessions log to map Date -> Session Name
+    const sessionsResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: sheetId,
+      range: `${SHEETS.SESSIONS}!A:B`,
+    });
+    const sessionsRows = sessionsResponse.data.values ?? [];
+    const dateToType = new Map<string, string>();
+    for (const r of sessionsRows.slice(1)) {
+      const d = r[0];
+      const name = r[1];
+      if (d && name) {
+        dateToType.set(d, name);
+      }
+    }
+
+    // 3. Fetch attendance matrix
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
       range: `${SHEETS.ATTENDANCE}!A:ZZ`,
@@ -76,17 +91,25 @@ export async function GET(request: NextRequest) {
 
     // Columns B (index 1) onwards are session columns
     for (let c = 1; c < headers.length; c++) {
-      const header = headers[c] ?? '';
-      // Parse "YYYY-MM-DD (Session Type)"
-      const match = header.match(/^([\d-]+)\s*\((.+)\)$/);
-      if (!match) continue;
+      const header = headers[c] ?? ''; // "YYYY-MM-DD"
+      if (!header) continue;
 
-      const datePart = match[1];
-      const typePart = match[2];
+      const datePart = header;
+      const typePart = dateToType.get(header) || 'Session';
 
       // Apply date and session type filters
       const matchesDate = dateFilter ? datePart === dateFilter : true;
-      const matchesType = typeFilter !== 'all' ? typePart === typeFilter : true;
+      
+      let matchesType = false;
+      if (typeFilter === 'all') {
+        matchesType = true;
+      } else if (typeFilter === 'sunday') {
+        matchesType = typePart.startsWith('Sahas Sunday');
+      } else if (typeFilter === 'meeting') {
+        matchesType = typePart === 'Meeting';
+      } else if (typeFilter === 'others') {
+        matchesType = !typePart.startsWith('Sahas Sunday') && typePart !== 'Meeting';
+      }
 
       if (matchesDate && matchesType) {
         for (const row of memberRows) {
