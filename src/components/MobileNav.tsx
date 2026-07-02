@@ -50,7 +50,7 @@ export default function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-30 bg-zinc-900/80 backdrop-blur-xl border-t border-zinc-800/50">
+    <nav className="fixed bottom-0 left-0 right-0 z-30 bg-stone-100/95 backdrop-blur-xl border-t border-stone-200/60 shadow-lg">
       <div className="flex items-center justify-around px-2 py-1 max-w-lg mx-auto">
         {navItems.map((item) => {
           const isActive =
@@ -64,14 +64,14 @@ export default function MobileNav() {
               href={item.href}
               className={`flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl transition-all duration-200 ${
                 isActive
-                  ? 'text-emerald-400'
-                  : 'text-zinc-500 hover:text-zinc-300 active:scale-95'
+                  ? 'text-sky-600 font-semibold'
+                  : 'text-stone-400 hover:text-stone-600 active:scale-95'
               }`}
             >
               {item.icon(isActive)}
               <span className="text-[10px] font-medium">{item.label}</span>
               {isActive && (
-                <div className="w-1 h-1 rounded-full bg-emerald-400 mt-0.5" />
+                <div className="w-1.5 h-1.5 rounded-full bg-sky-600 mt-0.5" />
               )}
             </Link>
           );

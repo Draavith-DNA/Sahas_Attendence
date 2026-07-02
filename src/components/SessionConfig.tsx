@@ -46,7 +46,7 @@ export default function SessionConfig({ onStartScanning }: SessionConfigProps) {
     <div className="space-y-6">
       {/* Category Selector */}
       <div>
-        <label className="block text-sm font-medium text-zinc-400 mb-3">
+        <label className="block text-sm font-medium text-stone-500 mb-3">
           Session Category
         </label>
         <div className="grid grid-cols-3 gap-2">
@@ -57,11 +57,11 @@ export default function SessionConfig({ onStartScanning }: SessionConfigProps) {
               others: 'Others',
             };
             const activeColors = {
-              sunday: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 ring-2 ring-emerald-500/20',
-              meeting: 'bg-blue-500/20 text-blue-300 border-blue-500/50 ring-2 ring-blue-500/20',
-              others: 'bg-violet-500/20 text-violet-300 border-violet-500/50 ring-2 ring-violet-500/20',
+              sunday: 'bg-sky-500/10 text-sky-700 border-sky-400/50 ring-2 ring-sky-500/10',
+              meeting: 'bg-sky-500/10 text-sky-700 border-sky-400/50 ring-2 ring-sky-500/10',
+              others: 'bg-sky-500/10 text-sky-700 border-sky-400/50 ring-2 ring-sky-500/10',
             };
-            const inactiveColors = 'bg-zinc-800/40 border-zinc-700/30 text-zinc-400 hover:text-zinc-300 hover:bg-zinc-800/60';
+            const inactiveColors = 'bg-stone-100 border-stone-200 text-stone-600 hover:text-stone-800 hover:bg-stone-200/50';
 
             return (
               <button
@@ -84,8 +84,8 @@ export default function SessionConfig({ onStartScanning }: SessionConfigProps) {
 
       {/* Sahas Sunday Sub-Options */}
       {category === 'sunday' && (
-        <div className="space-y-3 p-4 bg-zinc-900/40 border border-zinc-800/50 rounded-2xl animate-fade-in">
-          <label className="block text-xs font-medium text-zinc-500 uppercase tracking-wider">
+        <div className="space-y-3 p-4 bg-stone-100/50 border border-stone-200/50 rounded-2xl animate-fade-in">
+          <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wider">
             Select Sunday Activity
           </label>
           <div className="grid grid-cols-2 gap-2">
@@ -101,8 +101,8 @@ export default function SessionConfig({ onStartScanning }: SessionConfigProps) {
                   }}
                   className={`py-2.5 px-3 rounded-lg text-xs font-medium border transition-all duration-200 ${
                     isActive
-                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 font-semibold'
-                      : 'bg-zinc-800/20 border-zinc-700/20 text-zinc-400 hover:text-zinc-300'
+                      ? 'bg-sky-500/10 text-sky-700 border-sky-500/30 font-semibold'
+                      : 'bg-stone-50 border-stone-200 text-stone-500 hover:text-stone-700 hover:bg-stone-100'
                   }`}
                 >
                   {sub}
@@ -116,7 +116,7 @@ export default function SessionConfig({ onStartScanning }: SessionConfigProps) {
       {/* Dynamic Text Input for "Others" category or Sunday -> "Others" sub-option */}
       {((category === 'sunday' && sundaySub === 'Others') || category === 'others') && (
         <div className="space-y-1.5 animate-fade-in">
-          <label htmlFor="custom-session-text" className="block text-sm font-medium text-zinc-400">
+          <label htmlFor="custom-session-text" className="block text-sm font-medium text-stone-500">
             {category === 'sunday' ? 'Describe Sunday Activity' : 'Specify Session Type'}
           </label>
           <input
@@ -125,14 +125,14 @@ export default function SessionConfig({ onStartScanning }: SessionConfigProps) {
             value={customText}
             onChange={(e) => setCustomText(e.target.value)}
             placeholder={category === 'sunday' ? 'e.g. Guest Seminar, Community outreach' : 'e.g. Board Meet, Workshop'}
-            className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-xl text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all text-sm"
+            className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all text-sm"
           />
         </div>
       )}
 
       {/* Date Picker */}
       <div>
-        <label htmlFor="session-date" className="block text-sm font-medium text-zinc-400 mb-1.5">
+        <label htmlFor="session-date" className="block text-sm font-medium text-stone-500 mb-1.5">
           Session Date
         </label>
         <input
@@ -140,14 +140,14 @@ export default function SessionConfig({ onStartScanning }: SessionConfigProps) {
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700/50 rounded-xl text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all [color-scheme:dark]"
+          className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all"
         />
       </div>
 
       {/* Start Button */}
       <button
         onClick={handleStart}
-        className="w-full py-4 px-6 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold text-lg rounded-xl transition-all duration-200 active:scale-[0.98] shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-3"
+        className="w-full py-4 px-6 bg-gradient-to-r from-sky-600 to-sky-500 hover:from-sky-500 hover:to-sky-400 text-white font-bold text-lg rounded-xl transition-all duration-200 active:scale-[0.98] shadow-lg shadow-sky-500/20 flex items-center justify-center gap-3"
       >
         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />

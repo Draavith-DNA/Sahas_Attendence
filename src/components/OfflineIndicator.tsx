@@ -31,7 +31,7 @@ export default function OfflineIndicator() {
           !isOnline
             ? 'bg-amber-500/90 text-amber-950 backdrop-blur-sm'
             : isSyncing
-            ? 'bg-blue-500/90 text-blue-950 backdrop-blur-sm'
+            ? 'bg-sky-500/90 text-sky-950 backdrop-blur-sm'
             : 'bg-emerald-500/90 text-emerald-950 backdrop-blur-sm'
         }`}
       >

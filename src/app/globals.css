@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #09090b;
-  --foreground: #fafafa;
+  --background: #faf7f2;
+  --foreground: #1c1917;
 }
 
 @theme inline {
@@ -72,10 +72,10 @@ body {
 
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.4);
   }
   50% {
-    box-shadow: 0 0 0 12px rgba(16, 185, 129, 0);
+    box-shadow: 0 0 0 12px rgba(14, 165, 233, 0);
   }
 }
 
@@ -120,17 +120,17 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: #d6d3d1;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #52525b;
+  background: #a8a29e;
 }
 
-/* Fix for date inputs in dark mode */
+/* Date picker indicator - standard for light mode */
 input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
+  filter: none;
 }
 
 /* Safe area padding for PWA */

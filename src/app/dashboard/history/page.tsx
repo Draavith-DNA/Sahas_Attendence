@@ -26,8 +26,6 @@ export default function HistoryPage() {
   const fetchHistory = async () => {
     setIsLoading(true);
     try {
-      // The attendance data is in Google Sheets
-      // We'll read it through our API
       const res = await fetch(`/api/attendance?date=${selectedDate}&type=${selectedType}`);
       if (res.ok) {
         const data = await res.json();
@@ -53,15 +51,15 @@ export default function HistoryPage() {
     <div className="px-5 pt-14 pb-6 max-w-lg mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-zinc-50">History</h1>
-        <p className="text-zinc-500 text-sm mt-1">View past attendance records</p>
+        <h1 className="text-2xl font-bold text-stone-900">History</h1>
+        <p className="text-stone-500 text-sm mt-1 font-medium">View past attendance records</p>
       </div>
 
       {/* Filters */}
       <div className="space-y-3 mb-6">
         {/* Date filter */}
         <div>
-          <label htmlFor="history-date" className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label htmlFor="history-date" className="block text-sm font-medium text-stone-500 mb-1.5">
             Date
           </label>
           <input
@@ -69,13 +67,13 @@ export default function HistoryPage() {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-full px-4 py-3 bg-zinc-800/30 border border-zinc-700/30 rounded-xl text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/30 transition-all [color-scheme:dark]"
+            className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all [color-scheme:light]"
           />
         </div>
 
         {/* Session type filter */}
         <div>
-          <label className="block text-sm font-medium text-zinc-400 mb-1.5">
+          <label className="block text-sm font-medium text-stone-500 mb-1.5">
             Session Type
           </label>
           <div className="flex flex-wrap gap-2">
@@ -88,10 +86,10 @@ export default function HistoryPage() {
               <button
                 key={type.id}
                 onClick={() => setSelectedType(type.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   selectedType === type.id
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                    : 'bg-zinc-800/30 text-zinc-500 border border-zinc-700/30 hover:text-zinc-300'
+                    ? 'bg-sky-500/10 text-sky-700 border border-sky-400/30'
+                    : 'bg-stone-100 text-stone-500 border border-stone-200 hover:text-stone-700 hover:bg-stone-200/50'
                 }`}
               >
                 {type.label}
@@ -104,11 +102,11 @@ export default function HistoryPage() {
         <button
           onClick={fetchHistory}
           disabled={isLoading}
-          className="w-full py-3 px-4 bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 text-zinc-200 disabled:text-zinc-600 font-medium rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+          className="w-full py-3 px-4 bg-sky-600 hover:bg-sky-500 disabled:bg-stone-200 text-white disabled:text-stone-400 font-bold rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-md shadow-sky-500/10"
         >
           {isLoading ? (
             <>
-              <div className="w-4 h-4 border-2 border-zinc-500 border-t-zinc-200 rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-stone-400 border-t-white rounded-full animate-spin" />
               Loading…
             </>
           ) : (
@@ -127,53 +125,53 @@ export default function HistoryPage() {
         <div className="animate-fade-in">
           {filteredRecords.length === 0 ? (
             <div className="text-center py-12">
-              <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-4 border border-stone-200/50">
+                <svg className="w-8 h-8 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <p className="text-zinc-500 text-sm">No records found</p>
-              <p className="text-zinc-600 text-xs mt-1">
+              <p className="text-stone-500 text-sm font-medium">No records found</p>
+              <p className="text-stone-400 text-xs mt-1">
                 Try a different date or session type
               </p>
             </div>
           ) : (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-zinc-400 text-sm">
+                <p className="text-stone-500 text-sm font-medium">
                   {filteredRecords.length} record{filteredRecords.length !== 1 ? 's' : ''} found
                 </p>
               </div>
 
-              {/* Records Table */}
+              {/* Records List */}
               <div className="space-y-2">
                 {filteredRecords.map((record, index) => (
                   <div
                     key={`${record.memberId}-${record.timestamp}-${index}`}
-                    className="flex items-center gap-3 p-3.5 bg-zinc-800/20 border border-zinc-700/20 rounded-xl animate-slide-in"
+                    className="flex items-center gap-3 p-3.5 bg-stone-50 border border-stone-200 rounded-xl animate-slide-in shadow-sm"
                     style={{ animationDelay: `${index * 30}ms` }}
                   >
                     {/* Status dot */}
-                    <div className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-sky-500 flex-shrink-0" />
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-zinc-100 text-sm font-medium truncate">
+                      <p className="text-stone-900 text-sm font-semibold truncate">
                         {record.memberName}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-zinc-600 text-[10px] font-mono">
+                        <span className="text-stone-500 text-[10px] font-mono font-bold">
                           {record.memberId}
                         </span>
-                        <span className="text-zinc-700 text-[10px]">•</span>
-                        <span className="text-zinc-500 text-[10px]">
+                        <span className="text-stone-300 text-[10px]">•</span>
+                        <span className="text-sky-600 text-[10px] font-semibold">
                           {record.sessionType}
                         </span>
                       </div>
                     </div>
 
                     {/* Time */}
-                    <p className="text-zinc-500 text-xs flex-shrink-0">
+                    <p className="text-stone-500 text-xs flex-shrink-0 font-medium">
                       {record.timestamp}
                     </p>
                   </div>
@@ -186,12 +184,12 @@ export default function HistoryPage() {
 
       {!hasFetched && (
         <div className="text-center py-12">
-          <div className="w-16 h-16 rounded-full bg-zinc-800/50 flex items-center justify-center mx-auto mb-4 animate-float">
-            <svg className="w-8 h-8 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-4 animate-float border border-stone-200/50">
+            <svg className="w-8 h-8 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <p className="text-zinc-500 text-sm">Select a date and tap &ldquo;Load Records&rdquo;</p>
+          <p className="text-stone-500 text-sm font-medium">Select a date and tap &ldquo;Load Records&rdquo;</p>
         </div>
       )}
     </div>
