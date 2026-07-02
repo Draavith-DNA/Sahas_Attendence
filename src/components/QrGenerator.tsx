@@ -11,10 +11,38 @@ interface QrGeneratorProps {
   onMemberCreated?: () => void;
 }
 
+// ========================================================
+// 🛠️ GRAPHICS TEMPLATE CONFIGURATION (900 x 1380 px canvas)
+// ========================================================
+// Modify these values to align overlays precisely with your sahas-template.jpg design
+const TEMPLATE_CONFIG = {
+  qr: {
+    topPercent: '52%', // CSS vertical positioning
+    widthPercent: '42%', // CSS width proportion
+    canvasY: 720,      // Canvas vertical coordinate (pixels)
+    canvasSize: 378,   // Canvas QR size (pixels)
+    bgPadding: 16,     // White background padding (pixels)
+    borderRadius: 24,  // White background border radius (pixels)
+  },
+  name: {
+    bottomPercent: '16%', // CSS vertical positioning
+    canvasY: 1160,        // Canvas vertical coordinate (pixels)
+    fontSize: 38,         // Canvas font size (pixels)
+    color: '#1c1917',     // Canvas font color
+  },
+  id: {
+    bottomPercent: '10%', // CSS vertical positioning
+    canvasY: 1245,        // Canvas vertical coordinate (pixels)
+    fontSize: 28,         // Canvas font size (pixels)
+    color: '#0284c7',     // Canvas font color
+  }
+};
+
 export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [generatedId, setGeneratedId] = useState<string | null>(null);
+  const [registeredName, setRegisteredName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const qrRef = useRef<HTMLDivElement>(null);
@@ -43,6 +71,7 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
       if (res.ok) {
         const data = await res.json();
         setGeneratedId(data.member.memberId);
+        setRegisteredName(data.member.name);
         setName('');
         setEmail('');
         onMemberCreated?.();
@@ -58,76 +87,64 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
   }, [name, email, onMemberCreated]);
 
   const handleDownload = useCallback(() => {
-    if (!qrRef.current || !generatedId) return;
+    if (!qrRef.current || !generatedId || !registeredName) return;
 
     const canvas = qrRef.current.querySelector('canvas');
     if (!canvas) return;
 
-    // Create a branded card
-    const exportCanvas = document.createElement('canvas');
-    const ctx = exportCanvas.getContext('2d');
-    if (!ctx) return;
+    const img = new Image();
+    img.src = '/sahas-template.jpg';
+    img.onload = () => {
+      // Create export canvas matching original 900x1380 template dimensions
+      const exportCanvas = document.createElement('canvas');
+      const ctx = exportCanvas.getContext('2d');
+      if (!ctx) return;
 
-    const padding = 40;
-    const cardWidth = 400;
-    const qrSize = 280;
-    const headerHeight = 70;
-    const footerHeight = 60;
-    const cardHeight = headerHeight + qrSize + footerHeight + padding * 2;
+      const cardWidth = 900;
+      const cardHeight = 1380;
 
-    exportCanvas.width = cardWidth;
-    exportCanvas.height = cardHeight;
+      exportCanvas.width = cardWidth;
+      exportCanvas.height = cardHeight;
 
-    // Background
-    ctx.fillStyle = '#faf7f2'; // Warm cream bg
-    ctx.beginPath();
-    ctx.roundRect(0, 0, cardWidth, cardHeight, 16);
-    ctx.fill();
+      // 1. Draw template background image
+      ctx.drawImage(img, 0, 0, cardWidth, cardHeight);
 
-    // Outline border
-    ctx.strokeStyle = '#e7e5e4'; // stone-200
-    ctx.lineWidth = 3;
-    ctx.stroke();
+      // 2. Draw QR Code with white background padding for contrast
+      const { canvasY, canvasSize, bgPadding, borderRadius } = TEMPLATE_CONFIG.qr;
+      const qrX = (cardWidth - canvasSize) / 2;
 
-    // Header — branding
-    ctx.fillStyle = '#0284c7'; // sky-600
-    ctx.font = 'bold 28px Inter, system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('SAHAS', cardWidth / 2, padding + 32);
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.roundRect(
+        qrX - bgPadding,
+        canvasY - bgPadding,
+        canvasSize + bgPadding * 2,
+        canvasSize + bgPadding * 2,
+        borderRadius
+      );
+      ctx.fill();
 
-    ctx.fillStyle = '#78716c'; // stone-500
-    ctx.font = '13px Inter, system-ui, sans-serif';
-    ctx.fillText('Member Identity Card', cardWidth / 2, padding + 52);
+      ctx.drawImage(canvas, qrX, canvasY, canvasSize, canvasSize);
 
-    // QR Code
-    const qrX = (cardWidth - qrSize) / 2;
-    const qrY = padding + headerHeight;
+      // 3. Draw Member Name
+      ctx.fillStyle = TEMPLATE_CONFIG.name.color;
+      ctx.font = `bold ${TEMPLATE_CONFIG.name.fontSize}px Inter, system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(registeredName, cardWidth / 2, TEMPLATE_CONFIG.name.canvasY);
 
-    // White background for QR code box
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.roundRect(qrX - 8, qrY - 8, qrSize + 16, qrSize + 16, 12);
-    ctx.fill();
+      // 4. Draw Member ID
+      ctx.fillStyle = TEMPLATE_CONFIG.id.color;
+      ctx.font = `bold ${TEMPLATE_CONFIG.id.fontSize}px Courier New, monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(generatedId, cardWidth / 2, TEMPLATE_CONFIG.id.canvasY);
 
-    // Draw outline around QR container
-    ctx.strokeStyle = '#e7e5e4';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    ctx.drawImage(canvas, qrX, qrY, qrSize, qrSize);
-
-    // Footer — member ID
-    ctx.fillStyle = '#1c1917'; // stone-900
-    ctx.font = 'bold 18px Inter, system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(generatedId, cardWidth / 2, qrY + qrSize + 36);
-
-    // Download trigger
-    const link = document.createElement('a');
-    link.download = `${generatedId}.png`;
-    link.href = exportCanvas.toDataURL('image/png');
-    link.click();
-  }, [generatedId]);
+      // 5. Trigger download
+      const link = document.createElement('a');
+      link.download = `${generatedId}.png`;
+      link.href = exportCanvas.toDataURL('image/png');
+      link.click();
+    };
+  }, [generatedId, registeredName]);
 
   return (
     <div className="space-y-5">
@@ -143,7 +160,7 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Enter full name"
-            className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all text-sm"
+            className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-850 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all text-sm"
           />
         </div>
         <div>
@@ -156,7 +173,7 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="member@example.com"
-            className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all text-sm"
+            className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-850 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition-all text-sm"
           />
         </div>
 
@@ -180,36 +197,61 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
         </button>
       </div>
 
-      {/* Generated QR Display */}
-      {generatedId && (
-        <div className="bg-stone-50 border border-stone-200 rounded-2xl p-6 text-center space-y-4 animate-fade-in">
-          <div className="inline-flex items-center gap-2 text-sky-600 text-sm font-medium bg-sky-500/10 px-3 py-1.5 rounded-full">
+      {/* Generated QR Card Overlay View */}
+      {generatedId && registeredName && (
+        <div className="bg-stone-50 border border-stone-200 rounded-2xl p-6 flex flex-col items-center space-y-5 animate-fade-in shadow-sm">
+          <div className="inline-flex items-center gap-2 text-sky-600 text-sm font-semibold bg-sky-500/10 px-3 py-1.5 rounded-full">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
             Member Registered
           </div>
 
-          {/* QR Code render */}
-          <div ref={qrRef} className="flex justify-center">
-            <div className="bg-white p-4 rounded-xl border border-stone-200/50 shadow-sm">
+          {/* Interactive Layered Card Container */}
+          <div className="relative w-full max-w-[280px] aspect-[900/1380] rounded-2xl overflow-hidden shadow-lg border border-stone-250 bg-[url('/sahas-template.jpg')] bg-cover bg-center bg-no-repeat">
+            {/* 1. Dynamic QR Code Absolute Overlay */}
+            <div
+              ref={qrRef}
+              style={{
+                top: TEMPLATE_CONFIG.qr.topPercent,
+                width: TEMPLATE_CONFIG.qr.widthPercent,
+              }}
+              className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-2 rounded-xl border border-stone-200 shadow-sm flex items-center justify-center aspect-square"
+            >
               <QRCodeCanvas
                 value={generatedId}
-                size={200}
+                size={180}
+                style={{ width: '100%', height: '100%' }}
                 level="H"
                 marginSize={2}
               />
             </div>
+
+            {/* 2. Member Name Text Overlay */}
+            <div
+              style={{ bottom: TEMPLATE_CONFIG.name.bottomPercent }}
+              className="absolute left-0 right-0 text-center px-4"
+            >
+              <p className="text-stone-900 font-bold text-sm sm:text-base truncate drop-shadow-sm">
+                {registeredName}
+              </p>
+            </div>
+
+            {/* 3. Member ID Text Overlay */}
+            <div
+              style={{ bottom: TEMPLATE_CONFIG.id.bottomPercent }}
+              className="absolute left-0 right-0 text-center"
+            >
+              <p className="text-sky-600 font-bold font-mono text-xs tracking-wider">
+                {generatedId}
+              </p>
+            </div>
           </div>
 
-          <div>
-            <p className="text-stone-850 font-mono text-lg font-bold">{generatedId}</p>
-            <p className="text-stone-500 text-xs mt-1">Scan this code at Sahas sessions</p>
-          </div>
-
+          {/* Download trigger */}
           <button
             onClick={handleDownload}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-stone-200 hover:bg-stone-300 text-stone-700 font-medium rounded-xl transition-all duration-200 active:scale-[0.98]"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-stone-200 hover:bg-stone-300 text-stone-700 font-bold rounded-xl transition-all duration-200 active:scale-[0.98] border border-stone-250 shadow-sm text-sm"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
