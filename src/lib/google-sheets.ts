@@ -275,6 +275,7 @@ export async function ensureSheetStructure(): Promise<void> {
         });
       }
     }
+    await sortSheets();
   } catch (error) {
     console.error('Error ensuring sheet structure:', error);
     throw error;
@@ -483,8 +484,84 @@ export async function checkDuplicate(
 
 // ----- Member Operations -----
 
-/** Get all members from the Members sheet */
-export async function getMembers(): Promise<Member[]> {
+/** Sort both Members and Attendance sheets alphabetically by name, then member ID number */
+export async function sortSheets(): Promise<void> {
+  const sheets = getSheetsClient();
+  const spreadsheetId = getSheetId();
+
+  // 1. Fetch unsorted members
+  const unsortedMembers = await getMembersUnsorted();
+  if (unsortedMembers.length === 0) return;
+
+  const sortedMembers = [...unsortedMembers].sort((a, b) => {
+    const nameCompare = a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+    if (nameCompare !== 0) return nameCompare;
+    const numA = parseInt(a.memberId.replace(/^\D+/g, ''), 10) || 0;
+    const numB = parseInt(b.memberId.replace(/^\D+/g, ''), 10) || 0;
+    return numA - numB;
+  });
+
+  // Write sorted members back to Members sheet
+  const sortedMemberValues = sortedMembers.map(m => [m.memberId, m.name, m.email, m.createdAt]);
+  await sheets.spreadsheets.values.clear({
+    spreadsheetId,
+    range: `${SHEETS.MEMBERS}!A2:D`,
+  });
+  if (sortedMemberValues.length > 0) {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `${SHEETS.MEMBERS}!A2`,
+      valueInputOption: 'RAW',
+      requestBody: { values: sortedMemberValues },
+    });
+  }
+
+  // 2. Fetch and sort Attendance sheet
+  const attendanceRes = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: `${SHEETS.ATTENDANCE}!A:ZZ`,
+  });
+  const attendanceRows = attendanceRes.data.values ?? [];
+  if (attendanceRows.length <= 1) return; // Only headers or empty
+
+  const headers = attendanceRows[0];
+  
+  // Reconstruct sorted attendance rows matching the sortedMembers order
+  const newAttendanceRows: string[][] = [];
+  for (const member of sortedMembers) {
+    const oldIdx = unsortedMembers.findIndex(m => m.memberId === member.memberId);
+    let rowVal: string[];
+    if (oldIdx !== -1 && attendanceRows[oldIdx + 1]) {
+      rowVal = attendanceRows[oldIdx + 1];
+    } else {
+      rowVal = [member.name];
+    }
+    // Pad with 'Absent' if the row is shorter than headers
+    while (rowVal.length < headers.length) {
+      rowVal.push('Absent');
+    }
+    // Sync the name field just in case they were renamed or edited
+    rowVal[0] = member.name;
+    newAttendanceRows.push(rowVal);
+  }
+
+  // Clear and rewrite Attendance rows (keep header row 1 intact)
+  await sheets.spreadsheets.values.clear({
+    spreadsheetId,
+    range: `${SHEETS.ATTENDANCE}!A2:ZZ`,
+  });
+  if (newAttendanceRows.length > 0) {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `${SHEETS.ATTENDANCE}!A2`,
+      valueInputOption: 'RAW',
+      requestBody: { values: newAttendanceRows },
+    });
+  }
+}
+
+/** Get all members from the Members sheet (raw order from sheet) */
+async function getMembersUnsorted(): Promise<Member[]> {
   const sheets = getSheetsClient();
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: getSheetId(),
@@ -492,13 +569,28 @@ export async function getMembers(): Promise<Member[]> {
   });
 
   const rows = response.data.values ?? [];
-  // Skip header row
   return rows.slice(1).map((row) => ({
     memberId: row[0] ?? '',
     name: row[1] ?? '',
     email: row[2] ?? '',
     createdAt: row[3] ?? '',
   }));
+}
+
+/** Get all members from the Members sheet */
+export async function getMembers(): Promise<Member[]> {
+  const members = await getMembersUnsorted();
+
+  // Programmatic sort by Name, then ID number
+  members.sort((a, b) => {
+    const nameCompare = a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+    if (nameCompare !== 0) return nameCompare;
+    const numA = parseInt(a.memberId.replace(/^\D+/g, ''), 10) || 0;
+    const numB = parseInt(b.memberId.replace(/^\D+/g, ''), 10) || 0;
+    return numA - numB;
+  });
+
+  return members;
 }
 
 /** Look up a member name by their ID */
@@ -571,6 +663,9 @@ export async function addMember(name: string, email: string): Promise<Member> {
       requestBody: { values: [pastAbsentValues] },
     });
   }
+
+  // 3. Sort sheets to arrange alphabetically
+  await sortSheets();
 
   return { memberId: nextId, name, email, createdAt };
 }
