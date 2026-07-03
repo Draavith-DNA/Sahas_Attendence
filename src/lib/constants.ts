@@ -45,6 +45,7 @@ export const MEMBER_HEADERS = [
 
 /** Sessions row column headers */
 export const SESSION_HEADERS = [
-  'Date',
+  'Session Date',
+  'Start Time',
   'Session Name',
 ] as const;

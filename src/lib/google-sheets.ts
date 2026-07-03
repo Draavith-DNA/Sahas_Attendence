@@ -235,6 +235,45 @@ export async function ensureSheetStructure(): Promise<void> {
         valueInputOption: 'RAW',
         requestBody: { values: [SESSION_HEADERS as unknown as string[]] },
       });
+    } else {
+      // Validate headers
+      const res = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: `${SHEETS.SESSIONS}!A1:C1`,
+      });
+      const headers = res.data.values?.[0];
+      if (!headers || headers[0] !== 'Session Date' || !headers.includes('Start Time')) {
+        // Migration: Read old sessions data
+        const allSessionsRes = await sheets.spreadsheets.values.get({
+          spreadsheetId,
+          range: `${SHEETS.SESSIONS}!A:B`,
+        });
+        const oldRows = allSessionsRes.data.values ?? [];
+        const newRows: string[][] = [SESSION_HEADERS as unknown as string[]];
+
+        // Format was [Date, Session Name]
+        for (let i = 1; i < oldRows.length; i++) {
+          const row = oldRows[i];
+          if (!row || row.length === 0) continue;
+          const dateVal = row[0] ?? '';
+          const nameVal = row[1] ?? '';
+          if (dateVal) {
+            newRows.push([dateVal, '07:00', nameVal]); // Default start time to 07:00
+          }
+        }
+
+        // Clear and rewrite
+        await sheets.spreadsheets.values.clear({
+          spreadsheetId,
+          range: `${SHEETS.SESSIONS}!A:ZZ`,
+        });
+        await sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: `${SHEETS.SESSIONS}!A1`,
+          valueInputOption: 'RAW',
+          requestBody: { values: newRows },
+        });
+      }
     }
   } catch (error) {
     console.error('Error ensuring sheet structure:', error);
@@ -264,17 +303,17 @@ export async function recordAttendance(
   // Log the created session in the Sessions tab if it doesn't exist
   const sessionsResponse = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${SHEETS.SESSIONS}!A:B`,
+    range: `${SHEETS.SESSIONS}!A:C`,
   });
   const sessionsRows = sessionsResponse.data.values ?? [];
-  const sessionExists = sessionsRows.some(row => row[0] === cleanDate && row[1] === sessionType);
+  const sessionExists = sessionsRows.some(row => row[0] === cleanDate && row[2] === sessionType);
   if (!sessionExists) {
     await sheets.spreadsheets.values.append({
       spreadsheetId,
       range: `${SHEETS.SESSIONS}!A1`,
       valueInputOption: 'USER_ENTERED',
       requestBody: {
-        values: [[cleanDate, sessionType]],
+        values: [[cleanDate, eventStartTime, sessionType]],
       },
     });
   }

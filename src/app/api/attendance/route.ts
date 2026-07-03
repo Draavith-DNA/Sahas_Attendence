@@ -68,13 +68,13 @@ export async function GET(request: NextRequest) {
     // Fetch sessions to map date to sessionType
     const sessionsResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
-      range: `${SHEETS.SESSIONS}!A:B`,
+      range: `${SHEETS.SESSIONS}!A:C`,
     });
     const sessionsRows = sessionsResponse.data.values ?? [];
     const dateToSessionTypeMap = new Map<string, string>();
     for (const row of sessionsRows.slice(1)) {
       const dateVal = row[0] ?? '';
-      const typeVal = row[1] ?? 'Session';
+      const typeVal = row[2] ?? 'Session';
       if (dateVal) {
         dateToSessionTypeMap.set(dateVal.split('T')[0], typeVal);
       }
