@@ -81,7 +81,7 @@ export function getColumnLetter(colIndex: number): string {
 
 /**
  * Ensure the sheet tabs exist with proper headers.
- * For Attendance: Row 1 must have Timestamp, Member ID, Member Name, Session Type, Status, Event Start Time.
+ * For Attendance: Row 1 must have Name, and columns from B1 onwards will have the Dates.
  * For Members: A1 must be Member ID header.
  * For Sessions: A1 must be Date, B1 must be Session Name.
  */
@@ -102,31 +102,106 @@ export async function ensureSheetStructure(): Promise<void> {
           requests: [{ addSheet: { properties: { title: SHEETS.ATTENDANCE } } }],
         },
       });
+      // Get all registered members to populate Column A
+      const members = await getMembers();
+      const memberNames = members.map((m) => [m.name]);
       await sheets.spreadsheets.values.update({
         spreadsheetId,
         range: `${SHEETS.ATTENDANCE}!A1`,
         valueInputOption: 'RAW',
-        requestBody: { values: [['Timestamp', 'Member ID', 'Member Name', 'Session Type', 'Status', 'Event Start Time']] },
+        requestBody: { values: [['Name'], ...memberNames] },
       });
     } else {
-      // Validate A1 is "Timestamp"
+      // Validate A1 is "Name" or "Member Name"
       const res = await sheets.spreadsheets.values.get({
         spreadsheetId,
         range: `${SHEETS.ATTENDANCE}!A1:F1`,
       });
       const headers = res.data.values?.[0];
-      if (!headers || headers[0] !== 'Timestamp') {
-        // Migration: Reset old attendance sheet structure to transactional structure
-        await sheets.spreadsheets.values.clear({
-          spreadsheetId,
-          range: `${SHEETS.ATTENDANCE}!A:ZZ`,
-        });
-        await sheets.spreadsheets.values.update({
-          spreadsheetId,
-          range: `${SHEETS.ATTENDANCE}!A1`,
-          valueInputOption: 'RAW',
-          requestBody: { values: [['Timestamp', 'Member ID', 'Member Name', 'Session Type', 'Status', 'Event Start Time']] },
-        });
+      const firstHeader = headers?.[0];
+      if (firstHeader !== 'Name' && firstHeader !== 'Member Name') {
+        // Migration check: is the old structure present?
+        if (headers && headers.includes('Timestamp') && headers.includes('Member ID')) {
+          // Fetch all transactional data
+          const allDataRes = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: `${SHEETS.ATTENDANCE}!A:F`,
+          });
+          const oldRows = allDataRes.data.values ?? [];
+          const oldHeaders = oldRows[0] ?? [];
+          const timestampIdx = oldHeaders.indexOf('Timestamp');
+          const memberIdIdx = oldHeaders.indexOf('Member ID');
+          const nameIdx = oldHeaders.indexOf('Member Name');
+          const statusIdx = oldHeaders.indexOf('Status');
+
+          const members = await getMembers();
+          
+          // Map transaction logs to unique dates and statuses
+          const uniqueDatesSet = new Set<string>();
+          const recordMap = new Map<string, { [date: string]: string }>(); // memberId -> { date: status }
+
+          // Extract date from timestamp (format: YYYY-MM-DD)
+          for (let i = 1; i < oldRows.length; i++) {
+            const row = oldRows[i];
+            if (!row || row.length === 0) continue;
+            const timestamp = row[timestampIdx] ?? '';
+            const memberId = row[memberIdIdx] ?? '';
+            const status = row[statusIdx] ?? 'Present';
+            if (timestamp && memberId) {
+              const dateStr = timestamp.split('T')[0];
+              uniqueDatesSet.add(dateStr);
+              if (!recordMap.has(memberId)) {
+                recordMap.set(memberId, {});
+              }
+              // Keep the non-Absent / latest status if duplicates exist
+              const existingStatus = recordMap.get(memberId)![dateStr];
+              if (!existingStatus || (existingStatus === 'Absent' && status !== 'Absent')) {
+                recordMap.get(memberId)![dateStr] = status;
+              }
+            }
+          }
+
+          const sortedDates = Array.from(uniqueDatesSet).sort();
+
+          // Create new matrix values
+          const matrixHeaders = ['Name', ...sortedDates];
+          const matrixValues: string[][] = [matrixHeaders];
+
+          for (const member of members) {
+            const memberRow = [member.name];
+            const memberRecords = recordMap.get(member.memberId) ?? {};
+            for (const date of sortedDates) {
+              memberRow.push(memberRecords[date] || 'Absent');
+            }
+            matrixValues.push(memberRow);
+          }
+
+          // Clear old sheet and update with matrix
+          await sheets.spreadsheets.values.clear({
+            spreadsheetId,
+            range: `${SHEETS.ATTENDANCE}!A:ZZ`,
+          });
+          await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `${SHEETS.ATTENDANCE}!A1`,
+            valueInputOption: 'USER_ENTERED',
+            requestBody: { values: matrixValues },
+          });
+        } else {
+          // If the sheet is empty or has some random values, just reset it to name-only
+          const members = await getMembers();
+          const memberNames = members.map((m) => [m.name]);
+          await sheets.spreadsheets.values.clear({
+            spreadsheetId,
+            range: `${SHEETS.ATTENDANCE}!A:ZZ`,
+          });
+          await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `${SHEETS.ATTENDANCE}!A1`,
+            valueInputOption: 'RAW',
+            requestBody: { values: [['Name'], ...memberNames] },
+          });
+        }
       }
     }
 
@@ -169,7 +244,7 @@ export async function ensureSheetStructure(): Promise<void> {
 
 // ----- Attendance Log Operations -----
 
-/** Record attendance to the transactional sheet */
+/** Record attendance to the matrix sheet */
 export async function recordAttendance(
   memberId: string,
   sessionType: string,
@@ -184,8 +259,7 @@ export async function recordAttendance(
 
   const sheets = getSheetsClient();
   const spreadsheetId = getSheetId();
-
-  const timestamp = new Date().toISOString();
+  const cleanDate = date.split('T')[0];
 
   // Log the created session in the Sessions tab if it doesn't exist
   const sessionsResponse = await sheets.spreadsheets.values.get({
@@ -193,26 +267,121 @@ export async function recordAttendance(
     range: `${SHEETS.SESSIONS}!A:B`,
   });
   const sessionsRows = sessionsResponse.data.values ?? [];
-  const sessionExists = sessionsRows.some(row => row[0] === date && row[1] === sessionType);
+  const sessionExists = sessionsRows.some(row => row[0] === cleanDate && row[1] === sessionType);
   if (!sessionExists) {
     await sheets.spreadsheets.values.append({
       spreadsheetId,
       range: `${SHEETS.SESSIONS}!A1`,
       valueInputOption: 'USER_ENTERED',
       requestBody: {
-        values: [[date, sessionType]],
+        values: [[cleanDate, sessionType]],
       },
     });
   }
 
-  // Append scan record to Attendance sheet
-  await sheets.spreadsheets.values.append({
+  // Fetch current Attendance sheet
+  const attendanceRes = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${SHEETS.ATTENDANCE}!A1`,
-    valueInputOption: 'USER_ENTERED',
-    requestBody: {
-      values: [[timestamp, memberId, memberName, sessionType, arrivalStatus, eventStartTime]],
-    },
+    range: `${SHEETS.ATTENDANCE}!A:ZZ`,
+  });
+  const rows = attendanceRes.data.values ?? [];
+  
+  // If sheet is completely empty, initialize it
+  if (rows.length === 0) {
+    const members = await getMembers();
+    const memberNames = members.map((m) => [m.name]);
+    rows.push(['Name']);
+    for (const name of memberNames) {
+      rows.push(name);
+    }
+    // Write basic structure
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `${SHEETS.ATTENDANCE}!A1`,
+      valueInputOption: 'RAW',
+      requestBody: { values: rows },
+    });
+  }
+
+  const headers = rows[0] || ['Name'];
+  let dateColIdx = headers.indexOf(cleanDate);
+
+  // If date column doesn't exist, create it and pre-populate with "Absent"
+  if (dateColIdx === -1) {
+    dateColIdx = headers.length; // Next available index
+    const dateColLetter = getColumnLetter(dateColIdx + 1);
+    
+    // Write date header to Row 1
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `${SHEETS.ATTENDANCE}!${dateColLetter}1`,
+      valueInputOption: 'RAW',
+      requestBody: { values: [[cleanDate]] },
+    });
+
+    // Populate all other cells in this column with "Absent"
+    // Since rows has length `rows.length`, we want to write "Absent" to rows 2 to rows.length
+    if (rows.length > 1) {
+      const absentValues = Array(rows.length - 1).fill(['Absent']);
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `${SHEETS.ATTENDANCE}!${dateColLetter}2:${dateColLetter}${rows.length}`,
+        valueInputOption: 'RAW',
+        requestBody: { values: absentValues },
+      });
+    }
+  }
+
+  // Find member's row index
+  const members = await getMembers();
+  const memberIdx = members.findIndex((m) => m.memberId === memberId);
+  let foundRowIdx = -1;
+
+  if (memberIdx !== -1) {
+    const expectedRowIdx = memberIdx + 1; // 0-based index in rows
+    if (rows[expectedRowIdx] && rows[expectedRowIdx][0] === memberName) {
+      foundRowIdx = expectedRowIdx;
+    }
+  }
+
+  if (foundRowIdx === -1) {
+    foundRowIdx = rows.findIndex((row) => row[0] === memberName);
+  }
+
+  // If the member doesn't exist in Column A of the Attendance sheet, add them
+  if (foundRowIdx === -1) {
+    const nextRowIdx = rows.length + 1; // 1-based row index for sheet
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `${SHEETS.ATTENDANCE}!A${nextRowIdx}`,
+      valueInputOption: 'RAW',
+      requestBody: { values: [[memberName]] },
+    });
+    
+    // Fill their past date columns with "Absent"
+    if (headers.length > 1) {
+      const numPastDates = headers.length - 1;
+      const pastAbsentValues = Array(numPastDates).fill('Absent');
+      const lastColLetter = getColumnLetter(headers.length);
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `${SHEETS.ATTENDANCE}!B${nextRowIdx}:${lastColLetter}${nextRowIdx}`,
+        valueInputOption: 'RAW',
+        requestBody: { values: [pastAbsentValues] },
+      });
+    }
+    foundRowIdx = rows.length; // Update our 0-based row index reference
+  }
+
+  // Write arrival status to the specific cell
+  const targetColLetter = getColumnLetter(dateColIdx + 1);
+  const targetRow = foundRowIdx + 1; // Convert 0-based rows index to 1-based sheets row index
+  
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `${SHEETS.ATTENDANCE}!${targetColLetter}${targetRow}`,
+    valueInputOption: 'RAW',
+    requestBody: { values: [[arrivalStatus]] },
   });
 
   return { memberName };
@@ -226,24 +395,51 @@ export async function checkDuplicate(
 ): Promise<boolean> {
   const sheets = getSheetsClient();
   const spreadsheetId = getSheetId();
+  const cleanDate = date.split('T')[0];
 
+  // 1. Get member name
+  const memberName = await getMemberName(memberId);
+  if (!memberName) return false;
+
+  // 2. Fetch the Attendance sheet matrix
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${SHEETS.ATTENDANCE}!A:E`,
+    range: `${SHEETS.ATTENDANCE}!A:ZZ`,
   });
-
   const rows = response.data.values ?? [];
-  // Columns: A: Timestamp, B: Member ID, C: Member Name, D: Session Type, E: Status
-  return rows.slice(1).some((row) => {
-    const rowMemberId = row[1] ?? '';
-    const rowSessionType = row[3] ?? '';
-    const rowTimestamp = row[0] ?? '';
-    return (
-      rowMemberId === memberId &&
-      rowSessionType === sessionType &&
-      rowTimestamp.startsWith(date)
-    );
-  });
+  if (rows.length === 0) return false;
+
+  const headers = rows[0];
+  const dateIndex = headers.indexOf(cleanDate);
+  if (dateIndex === -1) {
+    // Date column doesn't exist, so no record can be a duplicate
+    return false;
+  }
+
+  // Find member's row
+  const members = await getMembers();
+  const memberIdx = members.findIndex((m) => m.memberId === memberId);
+  let foundRowIdx = -1;
+
+  if (memberIdx !== -1) {
+    const expectedRowIdx = memberIdx + 1; // 0-based row index in rows (where row 0 is headers)
+    if (rows[expectedRowIdx] && rows[expectedRowIdx][0] === memberName) {
+      foundRowIdx = expectedRowIdx;
+    }
+  }
+
+  // Fallback to name search in case they were reordered or added differently
+  if (foundRowIdx === -1) {
+    foundRowIdx = rows.findIndex((row) => row[0] === memberName);
+  }
+
+  if (foundRowIdx === -1) {
+    return false;
+  }
+
+  const status = rows[foundRowIdx][dateIndex] ?? '';
+  // If the status is not empty and not "Absent", it's a duplicate scan!
+  return status !== '' && status !== 'Absent';
 }
 
 // ----- Member Operations -----
@@ -318,6 +514,24 @@ export async function addMember(name: string, email: string): Promise<Member> {
       values: [[name]],
     },
   });
+
+  // Fetch Row 1 headers to determine how many dates we have
+  const headersResponse = await sheets.spreadsheets.values.get({
+    spreadsheetId: getSheetId(),
+    range: `${SHEETS.ATTENDANCE}!1:1`,
+  });
+  const headers = headersResponse.data.values?.[0] ?? ['Name'];
+  if (headers.length > 1) {
+    const numPastDates = headers.length - 1;
+    const pastAbsentValues = Array(numPastDates).fill('Absent');
+    const lastColLetter = getColumnLetter(headers.length);
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: getSheetId(),
+      range: `${SHEETS.ATTENDANCE}!B${nextRow}:${lastColLetter}${nextRow}`,
+      valueInputOption: 'RAW',
+      requestBody: { values: [pastAbsentValues] },
+    });
+  }
 
   return { memberId: nextId, name, email, createdAt };
 }

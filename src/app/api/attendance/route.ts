@@ -49,32 +49,82 @@ export async function GET(request: NextRequest) {
 
     const sheets = google.sheets({ version: 'v4', auth });
 
-    // Fetch attendance transactional records
+    // Fetch attendance matrix records
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
-      range: `${SHEETS.ATTENDANCE}!A:F`,
+      range: `${SHEETS.ATTENDANCE}!A:ZZ`,
     });
 
     const rows = response.data.values ?? [];
-    // Columns: A: Timestamp, B: Member ID, C: Member Name, D: Session Type, E: Status, F: Event Start Time
-    const records = rows.slice(1).map((row) => {
-      const timestamp = row[0] ?? '';
-      const memberId = row[1] ?? '';
-      const memberName = row[2] ?? '';
-      const sessionType = row[3] ?? '';
-      const statusVal = row[4] ?? 'Present';
-      return {
-        timestamp: timestamp.split('T')[0], // keep just the date part for display compatibility
-        memberId,
-        memberName,
-        sessionType,
-        status: statusVal,
-      };
-    });
+    const headers = rows[0] ?? [];
 
-    // Apply date and session type filters
+    // Fetch members to map memberName back to memberId
+    const members = await getMembers();
+    const memberNameToIdMap = new Map<string, string>();
+    for (const member of members) {
+      memberNameToIdMap.set(member.name.toLowerCase().trim(), member.memberId);
+    }
+
+    // Fetch sessions to map date to sessionType
+    const sessionsResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: sheetId,
+      range: `${SHEETS.SESSIONS}!A:B`,
+    });
+    const sessionsRows = sessionsResponse.data.values ?? [];
+    const dateToSessionTypeMap = new Map<string, string>();
+    for (const row of sessionsRows.slice(1)) {
+      const dateVal = row[0] ?? '';
+      const typeVal = row[1] ?? 'Session';
+      if (dateVal) {
+        dateToSessionTypeMap.set(dateVal.split('T')[0], typeVal);
+      }
+    }
+
+    const records: {
+      timestamp: string;
+      memberId: string;
+      memberName: string;
+      sessionType: string;
+      status: string;
+    }[] = [];
+
+    // Reconstruct transactional records from the matrix
+    if (rows.length > 0 && headers.length > 1) {
+      for (let colIdx = 1; colIdx < headers.length; colIdx++) {
+        const dateVal = headers[colIdx];
+        if (!dateVal) continue;
+        const cleanDate = dateVal.split('T')[0];
+
+        // Filter by date during traversal if date filter is set (perf optimization)
+        if (dateFilter && cleanDate !== dateFilter) {
+          continue;
+        }
+
+        const sessionType = dateToSessionTypeMap.get(cleanDate) || 'Session';
+
+        for (let rowIdx = 1; rowIdx < rows.length; rowIdx++) {
+          const row = rows[rowIdx];
+          if (!row || row.length === 0) continue;
+          const nameVal = row[0] ?? '';
+          if (!nameVal) continue;
+
+          const statusVal = row[colIdx] ?? '';
+          if (statusVal && statusVal !== 'Absent') {
+            const memberId = memberNameToIdMap.get(nameVal.toLowerCase().trim()) || 'UNKNOWN';
+            records.push({
+              timestamp: cleanDate,
+              memberId,
+              memberName: nameVal,
+              sessionType,
+              status: statusVal,
+            });
+          }
+        }
+      }
+    }
+
+    // Apply session type filters
     const filteredRecords = records.filter((r) => {
-      const matchesDate = dateFilter ? r.timestamp === dateFilter : true;
       let matchesType = false;
       if (typeFilter === 'all') {
         matchesType = true;
@@ -85,10 +135,10 @@ export async function GET(request: NextRequest) {
       } else if (typeFilter === 'others') {
         matchesType = !r.sessionType.startsWith('Sahas Sunday') && r.sessionType !== 'Meeting';
       }
-      return matchesDate && matchesType;
+      return matchesType;
     });
 
-    // Newest sessions first
+    // Newest records first (since date columns are ordered chronologically, reversing gives newest)
     filteredRecords.reverse();
 
     return NextResponse.json({ records: filteredRecords });
