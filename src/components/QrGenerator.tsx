@@ -58,8 +58,9 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
       return;
     }
 
-    if (!email.includes('@')) {
-      setError('Please enter a valid email');
+    const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!EMAIL_REGEX.test(email.trim())) {
+      setError('Please enter a valid email address');
       return;
     }
 
