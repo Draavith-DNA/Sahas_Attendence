@@ -125,6 +125,8 @@ export default function QrScanner({ onScan, onError, enabled = true }: QrScanner
         }}
         constraints={{
           facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
         }}
       />
 

@@ -127,6 +127,13 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
         canvasSize + bgPadding * 2
       );
 
+      // Disable image smoothing to ensure the QR code remains crisp and sharp on download
+      ctx.imageSmoothingEnabled = false;
+      const anyCtx = ctx as any;
+      if ('mozImageSmoothingEnabled' in anyCtx) anyCtx.mozImageSmoothingEnabled = false;
+      if ('webkitImageSmoothingEnabled' in anyCtx) anyCtx.webkitImageSmoothingEnabled = false;
+      if ('msImageSmoothingEnabled' in anyCtx) anyCtx.msImageSmoothingEnabled = false;
+
       ctx.drawImage(canvas, qrX, canvasY, canvasSize, canvasSize);
 
       // 3. Draw Member Name (Centered, Serif)
@@ -223,10 +230,10 @@ export default function QrGenerator({ onMemberCreated }: QrGeneratorProps) {
             >
               <QRCodeCanvas
                 value={generatedId}
-                size={180}
+                size={TEMPLATE_CONFIG.qr.canvasSize} // 480px native resolution matching template size
                 style={{ width: '100%', height: '100%' }}
-                level="H"
-                marginSize={2}
+                level="Q" // Quartile correction (25%) is highly robust yet less dense than H
+                marginSize={3} // 3 modules margin for reliable quiet zone detection
               />
             </div>
 
